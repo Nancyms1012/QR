@@ -1,4 +1,4 @@
-// POST /api/send-email - Send QR code email to a single participant via MailChannels
+// POST /api/send-email - Send QR code email to a single participant via Resend
 export async function onRequestPost(context) {
   const { env, request } = context;
 
@@ -10,6 +10,13 @@ export async function onRequestPost(context) {
     if (!dorsal) {
       return new Response(JSON.stringify({ error: "Dorsal requerido" }), {
         status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    if (!env.RESEND_API_KEY) {
+      return new Response(JSON.stringify({ error: "RESEND_API_KEY no configurada" }), {
+        status: 500,
         headers: { "Content-Type": "application/json" }
       });
     }
@@ -39,32 +46,53 @@ export async function onRequestPost(context) {
 
     const siteUrl = new URL(request.url).origin;
     const qrPageUrl = `${siteUrl}/qr.html?dorsal=${participant.dorsal}`;
+    const fromEmail = env.FROM_EMAIL || "checkin@raceclubhub.com";
+    const fromName = env.FROM_NAME || "XTERRA CR";
 
-    // Send email via MailChannels with QR image embedded
-    const emailResult = await sendMailChannels({
-      to: participant.email,
-      toName: participant.nombre,
-      subject: `🏊‍♂️ Tu Código QR - Triatlón Race Club Hub - Dorsal #${participant.dorsal}`,
-      htmlBody: generateEmailHTML(participant, qrPageUrl, qrImageBase64),
-      textBody: generateEmailText(participant, qrPageUrl),
-      fromEmail: env.FROM_EMAIL || "checkin@raceclubhub.com",
-      fromName: env.FROM_NAME || "Race Club Hub",
-      dkimDomain: env.DKIM_DOMAIN || undefined,
-      dkimSelector: env.DKIM_SELECTOR || undefined,
-      dkimPrivateKey: env.DKIM_PRIVATE_KEY || undefined
+    // Build email payload for Resend
+    const emailPayload = {
+      from: `${fromName} <${fromEmail}>`,
+      to: [participant.email],
+      subject: `🏊‍♂️ Tu Código QR - XTERRA CR - Dorsal #${participant.dorsal}`,
+      html: generateEmailHTML(participant, qrPageUrl, qrImageBase64),
+      text: generateEmailText(participant, qrPageUrl)
+    };
+
+    // If we have a QR image, attach it
+    if (qrImageBase64 && qrImageBase64.startsWith('data:image/png;base64,')) {
+      const base64Data = qrImageBase64.replace('data:image/png;base64,', '');
+      emailPayload.attachments = [
+        {
+          filename: `qr-dorsal-${participant.dorsal}.png`,
+          content: base64Data
+        }
+      ];
+    }
+
+    // Send via Resend API
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(emailPayload)
     });
 
-    if (emailResult.success) {
+    if (response.ok) {
+      const result = await response.json();
       return new Response(JSON.stringify({
         success: true,
-        message: `Email enviado a ${participant.email}`
+        message: `Email enviado a ${participant.email}`,
+        id: result.id
       }), {
         headers: { "Content-Type": "application/json" }
       });
     } else {
+      const errorText = await response.text();
       return new Response(JSON.stringify({
         error: "Error al enviar email",
-        details: emailResult.error
+        details: `Status ${response.status}: ${errorText}`
       }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
@@ -78,47 +106,7 @@ export async function onRequestPost(context) {
   }
 }
 
-async function sendMailChannels({ to, toName, subject, htmlBody, textBody, fromEmail, fromName, dkimDomain, dkimSelector, dkimPrivateKey }) {
-  const emailPayload = {
-    personalizations: [
-      {
-        to: [{ email: to, name: toName }]
-      }
-    ],
-    from: { email: fromEmail, name: fromName },
-    subject: subject,
-    content: [
-      { type: "text/plain", value: textBody },
-      { type: "text/html", value: htmlBody }
-    ]
-  };
-
-  if (dkimDomain && dkimSelector && dkimPrivateKey) {
-    emailPayload.personalizations[0].dkim_domain = dkimDomain;
-    emailPayload.personalizations[0].dkim_selector = dkimSelector;
-    emailPayload.personalizations[0].dkim_private_key = dkimPrivateKey;
-  }
-
-  try {
-    const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(emailPayload)
-    });
-
-    if (response.status === 202 || response.status === 200) {
-      return { success: true };
-    } else {
-      const errorText = await response.text();
-      return { success: false, error: `Status ${response.status}: ${errorText}` };
-    }
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
 function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
-  // If we have a base64 QR image, embed it directly
   const qrImageTag = qrImageBase64
     ? `<img src="${qrImageBase64}" alt="Código QR" style="width:250px;height:250px;display:block;margin:0 auto;" />`
     : `<p style="text-align:center;"><a href="${qrPageUrl}" style="display:inline-block;background:#2563eb;color:white;padding:0.85rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">📱 Ver mi Código QR</a></p>`;
@@ -130,7 +118,7 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 2rem;">
   <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 1.5rem;">
-      <h1 style="font-size: 1.5rem; color: #1e293b;">🏊‍♂️🚴‍♂️🏃‍♂️ Race Club Hub</h1>
+      <h1 style="font-size: 1.5rem; color: #1e293b;">🏊‍♂️🚴‍♂️🏃‍♂️ XTERRA CR</h1>
       <p style="color: #64748b;">Sistema de Check-in - Triatlón</p>
     </div>
     
@@ -164,13 +152,13 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
       <p style="font-size: 0.85rem; color: #166534; margin: 0;">
         <strong>📱 Instrucciones:</strong><br>
         Presentá este código QR el día de la carrera para hacer el check-in de forma rápida. 
-        Podés guardar una captura de pantalla o descargarlo.
+        Podés guardar una captura de pantalla o descargarlo del adjunto.
       </p>
     </div>
 
     <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
       <p style="font-size: 0.8rem; color: #94a3b8;">
-        Race Club Hub · raceclubhub.com<br>
+        XTERRA CR · raceclubhub.com<br>
         ¡Nos vemos en la meta! 🏁
       </p>
     </div>
@@ -180,7 +168,7 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
 }
 
 function generateEmailText(participant, qrPageUrl) {
-  return `🏊‍♂️🚴‍♂️🏃‍♂️ Race Club Hub - Triatlón
+  return `🏊‍♂️🚴‍♂️🏃‍♂️ XTERRA CR - Triatlón
 
 ¡Hola ${participant.nombre}! 👋
 
@@ -197,6 +185,6 @@ Presentá tu código QR el día de la carrera para hacer check-in rápido.
 
 ¡Nos vemos en la meta! 🏁
 
-- Equipo Race Club Hub
+- XTERRA CR
   raceclubhub.com`;
 }
