@@ -4,4 +4,4 @@ pages_build_output_dir = "public"
 
 [[kv_namespaces]]
 binding = "CHECKIN_KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "c6fd1539198a4dcf917e0ce04fdbba18"
