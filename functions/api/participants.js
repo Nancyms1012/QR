@@ -3,6 +3,18 @@ export async function onRequestGet(context) {
   const { env } = context;
 
   try {
+    // Check if KV binding exists
+    if (!env.CHECKIN_KV) {
+      return new Response(JSON.stringify({ 
+        error: "KV no vinculado", 
+        details: "CHECKIN_KV binding no está configurado. Ve a Settings > Bindings en Cloudflare Pages.",
+        availableBindings: Object.keys(env)
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
     // Get base participants data
     const participantsRaw = await env.CHECKIN_KV.get("participants", { type: "json" });
     if (!participantsRaw) {
