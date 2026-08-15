@@ -19,46 +19,86 @@
     .card {
       background: white;
       border-radius: 20px;
-      padding: 2.5rem 2rem;
+      padding: 2rem 1.5rem;
       text-align: center;
-      max-width: 400px;
+      max-width: 420px;
       width: 100%;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     }
-    .logo { font-size: 2rem; margin-bottom: 0.5rem; }
-    .title { font-size: 1.1rem; color: #6b7280; margin-bottom: 1.5rem; }
+    .logo { font-size: 2rem; margin-bottom: 0.25rem; }
+    .title { font-size: 1rem; color: #6b7280; margin-bottom: 1.5rem; }
     .dorsal { font-size: 3.5rem; font-weight: 800; color: #2563eb; }
-    .nombre { font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0; }
-    .categoria { color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem; }
-    #qr-container { margin: 1.5rem 0; }
-    #qr-container canvas { max-width: 250px; height: auto; }
-    .instructions {
+    .nombre { font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0; color: #1e293b; }
+    .categoria {
+      color: #4b5563;
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
       background: #f1f5f9;
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+    }
+    #qr-container {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #ffffff;
+      border: 3px solid #e2e8f0;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    #qr-container canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    .instructions {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       border-radius: 10px;
       padding: 1rem;
-      margin-top: 1.5rem;
+      margin-top: 1.25rem;
       font-size: 0.85rem;
-      color: #475569;
+      color: #166534;
     }
     .btn-download {
       display: inline-block;
       margin-top: 1rem;
       background: #2563eb;
       color: white;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.25rem;
       border-radius: 8px;
       text-decoration: none;
       font-weight: 500;
       cursor: pointer;
       border: none;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
     .btn-download:hover { background: #1d4ed8; }
+    .info-table {
+      width: 100%;
+      margin: 1rem 0;
+      border-collapse: collapse;
+    }
+    .info-table td {
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .info-table td:first-child {
+      color: #64748b;
+      font-weight: 500;
+      width: 40%;
+    }
+    .info-table td:last-child {
+      font-weight: 600;
+      color: #1e293b;
+    }
     .error { color: #dc2626; margin-top: 1rem; }
     @media print {
-      body { background: white; }
-      .card { box-shadow: none; }
-      .btn-download, .instructions { display: none; }
+      body { background: white; padding: 0; }
+      .card { box-shadow: none; max-width: 100%; }
+      .btn-download { display: none; }
     }
   </style>
 </head>
@@ -67,7 +107,7 @@
     <div class="logo">🏊‍♂️🚴‍♂️🏃‍♂️</div>
     <div class="title">Race Club Hub - Triatlón</div>
     <div id="content">
-      <p style="color:#64748b;">Cargando...</p>
+      <p style="color:#64748b;">Cargando tu código QR...</p>
     </div>
   </div>
 
@@ -90,24 +130,33 @@
         content.innerHTML = `
           <div class="dorsal">#${p.dorsal}</div>
           <div class="nombre">${p.nombre}</div>
-          <div class="categoria">${p.categoria}</div>
+          <span class="categoria">${p.categoria}</span>
+
           <div id="qr-container">
             <canvas id="qr-canvas"></canvas>
           </div>
-          <button class="btn-download" onclick="downloadQR()">📥 Descargar QR</button>
+
+          <table class="info-table">
+            <tr><td>👤 Nombre</td><td>${p.nombre}</td></tr>
+            <tr><td>🔢 Dorsal</td><td>#${p.dorsal}</td></tr>
+            <tr><td>🏷️ Categoría</td><td>${p.categoria}</td></tr>
+          </table>
+
           <div class="instructions">
-            <strong>📱 Instrucciones:</strong><br>
-            Presentá este código QR el día de la carrera para hacer tu check-in de forma rápida.
+            <strong>📱 Presentá este QR el día de la carrera</strong> para hacer tu check-in de forma rápida. 
             Podés guardar una captura de pantalla o descargarlo.
           </div>
+
+          <button class="btn-download" onclick="downloadQR()">📥 Descargar QR</button>
         `;
 
+        // Generate QR immediately and visibly
         const canvas = document.getElementById('qr-canvas');
         const qrData = JSON.stringify({ dorsal: p.dorsal, nombre: p.nombre });
         new QRious({
           element: canvas,
           value: qrData,
-          size: 250,
+          size: 280,
           level: 'M'
         });
 
