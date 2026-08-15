@@ -18,6 +18,7 @@
       <button class="nav-btn" data-view="list">📋 Lista</button>
       <button class="nav-btn" data-view="stats">📊 Stats</button>
       <button class="nav-btn" data-view="qrcodes">🏷️ QR Codes</button>
+      <button class="nav-btn" data-view="send">📤 Enviar QR</button>
     </nav>
   </header>
 
@@ -75,6 +76,26 @@
       <div id="qr-grid" class="qr-grid"></div>
     </section>
   </main>
+
+    <!-- SEND QR VIEW -->
+    <section id="view-send" class="view">
+      <h2>📤 Enviar Códigos QR</h2>
+      <p class="hint">Envía el código QR a cada atleta por WhatsApp o Email. Asegúrate de que los datos de contacto estén actualizados.</p>
+      
+      <div class="send-controls">
+        <div class="send-stats" id="send-stats"></div>
+        <div class="send-actions">
+          <button id="btn-bulk-whatsapp" class="btn btn-success">📱 Enviar todos por WhatsApp</button>
+          <button id="btn-bulk-email" class="btn btn-primary">📧 Enviar todos por Email</button>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="send-search-input" placeholder="Filtrar por nombre o dorsal..." autocomplete="off">
+      </div>
+
+      <div id="send-list" class="send-list"></div>
+    </section>
 
   <!-- CHECK-IN MODAL -->
   <div id="checkin-modal" class="modal hidden">

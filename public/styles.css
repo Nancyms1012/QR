@@ -395,6 +395,131 @@ h2 {
   justify-content: center;
 }
 
+/* Send QR View */
+.send-controls {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+}
+
+.send-stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.send-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.send-stats .stat-item strong {
+  font-size: 1.1rem;
+}
+
+.send-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.send-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.send-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.send-card .send-info {
+  flex: 1;
+}
+
+.send-card .send-info .dorsal {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.send-card .send-info .nombre {
+  font-weight: 500;
+  margin: 0.15rem 0;
+}
+
+.send-card .send-info .contacto {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.send-card .send-info .contacto span {
+  margin-right: 0.75rem;
+}
+
+.send-card .send-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.send-card .send-buttons .btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.btn-whatsapp {
+  background: #25D366;
+  color: white;
+}
+.btn-whatsapp:hover { background: #1da851; }
+
+.btn-email {
+  background: #0078D4;
+  color: white;
+}
+.btn-email:hover { background: #005a9e; }
+
+.btn-disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+.btn-disabled:hover { background: #cbd5e1; }
+
+.send-card .no-contact {
+  font-size: 0.75rem;
+  color: var(--danger);
+  font-style: italic;
+}
+
+/* Bulk send progress */
+.bulk-progress {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.bulk-progress .progress-text {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
 /* Print styles */
 @media print {
   header, nav, .filters, .btn, .hint, .search-box, .subtitle { display: none !important; }

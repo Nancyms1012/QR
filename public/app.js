@@ -13,6 +13,7 @@ navButtons.forEach(btn => {
     if (viewId === 'list') loadParticipantsList();
     if (viewId === 'stats') loadStats();
     if (viewId === 'qrcodes') loadQRCodes();
+    if (viewId === 'send') loadSendList();
   });
 });
 
@@ -356,3 +357,238 @@ async function loadQRCodes() {
 document.getElementById('btn-print-qr').addEventListener('click', () => {
   window.print();
 });
+
+
+// ============ SEND QR (WhatsApp + Email) ============
+const sendSearchInput = document.getElementById('send-search-input');
+const sendList = document.getElementById('send-list');
+const sendStats = document.getElementById('send-stats');
+const btnBulkWhatsapp = document.getElementById('btn-bulk-whatsapp');
+const btnBulkEmail = document.getElementById('btn-bulk-email');
+
+let allParticipantsCache = [];
+
+if (sendSearchInput) {
+  sendSearchInput.addEventListener('keyup', () => {
+    renderSendList(sendSearchInput.value.trim().toLowerCase());
+  });
+}
+
+if (btnBulkWhatsapp) {
+  btnBulkWhatsapp.addEventListener('click', bulkSendWhatsApp);
+}
+
+if (btnBulkEmail) {
+  btnBulkEmail.addEventListener('click', bulkSendEmail);
+}
+
+async function loadSendList() {
+  try {
+    const res = await fetch('/api/participants');
+    allParticipantsCache = await res.json();
+    updateSendStats();
+    renderSendList('');
+  } catch (err) {
+    sendList.innerHTML = '<p style="color:red;">Error al cargar participantes</p>';
+  }
+}
+
+function updateSendStats() {
+  const withPhone = allParticipantsCache.filter(p => p.telefono && p.telefono.trim()).length;
+  const withEmail = allParticipantsCache.filter(p => p.email && p.email.trim()).length;
+  const total = allParticipantsCache.length;
+
+  sendStats.innerHTML = `
+    <div class="stat-item">📋 Total: <strong>${total}</strong></div>
+    <div class="stat-item">📱 Con teléfono: <strong>${withPhone}</strong></div>
+    <div class="stat-item">📧 Con email: <strong>${withEmail}</strong></div>
+  `;
+}
+
+function renderSendList(query) {
+  let filtered = allParticipantsCache;
+  if (query) {
+    filtered = filtered.filter(p =>
+      p.dorsal.toString().includes(query) ||
+      p.nombre.toLowerCase().includes(query)
+    );
+  }
+
+  if (filtered.length === 0) {
+    sendList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No se encontraron resultados</p>';
+    return;
+  }
+
+  sendList.innerHTML = filtered.map(p => {
+    const hasPhone = p.telefono && p.telefono.trim();
+    const hasEmail = p.email && p.email.trim();
+
+    return `
+      <div class="send-card" data-dorsal="${p.dorsal}">
+        <div class="send-info">
+          <span class="dorsal">#${p.dorsal}</span>
+          <div class="nombre">${p.nombre}</div>
+          <div class="contacto">
+            ${hasPhone ? `<span>📱 ${p.telefono}</span>` : ''}
+            ${hasEmail ? `<span>📧 ${p.email}</span>` : ''}
+            ${!hasPhone && !hasEmail ? '<span class="no-contact">⚠️ Sin datos de contacto</span>' : ''}
+          </div>
+        </div>
+        <div class="send-buttons">
+          <button class="btn btn-whatsapp ${!hasPhone ? 'btn-disabled' : ''}" 
+                  onclick="sendWhatsApp(${p.dorsal})" 
+                  ${!hasPhone ? 'disabled' : ''}>
+            📱 WA
+          </button>
+          <button class="btn btn-email ${!hasEmail ? 'btn-disabled' : ''}" 
+                  onclick="sendEmail(${p.dorsal})" 
+                  ${!hasEmail ? 'disabled' : ''}>
+            📧 Email
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Generate QR as data URL for a participant
+async function generateQRDataURL(participant) {
+  const qrData = JSON.stringify({ dorsal: participant.dorsal, nombre: participant.nombre });
+  return new Promise((resolve, reject) => {
+    QRCode.toDataURL(qrData, { width: 300, margin: 2 }, (err, url) => {
+      if (err) reject(err);
+      else resolve(url);
+    });
+  });
+}
+
+// Send individual WhatsApp
+async function sendWhatsApp(dorsal) {
+  const participant = allParticipantsCache.find(p => p.dorsal === dorsal);
+  if (!participant || !participant.telefono) return;
+
+  // Clean phone number (remove spaces, dashes, etc) and ensure country code
+  let phone = participant.telefono.replace(/[\s\-\(\)\.]/g, '');
+  // If starts with 0, replace with Costa Rica code
+  if (phone.startsWith('0')) phone = '506' + phone.substring(1);
+  // If doesn't start with +, add Costa Rica code
+  if (!phone.startsWith('+') && !phone.startsWith('506') && phone.length <= 8) {
+    phone = '506' + phone;
+  }
+  // Remove + if present
+  phone = phone.replace('+', '');
+
+  const message = encodeURIComponent(
+    `🏊‍♂️🚴‍♂️🏃‍♂️ *Race Club Hub - Triatlón*\n\n` +
+    `¡Hola ${participant.nombre}! 👋\n\n` +
+    `Tu número de dorsal es: *#${participant.dorsal}*\n` +
+    `Categoría: ${participant.categoria}\n\n` +
+    `📱 Presentá tu código QR el día de la carrera para hacer check-in rápido.\n\n` +
+    `🔗 Descargá tu QR aquí: ${window.location.origin}/qr.html?dorsal=${participant.dorsal}\n\n` +
+    `¡Nos vemos en la meta! 🏁`
+  );
+
+  const waUrl = `https://wa.me/${phone}?text=${message}`;
+  window.open(waUrl, '_blank');
+}
+
+// Send individual Email
+async function sendEmail(dorsal) {
+  const participant = allParticipantsCache.find(p => p.dorsal === dorsal);
+  if (!participant || !participant.email) return;
+
+  // Try server-side email first
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dorsal: participant.dorsal })
+    });
+
+    if (res.ok) {
+      alert(`✅ Email enviado a ${participant.email}`);
+      return;
+    }
+  } catch (err) {
+    // Fall through to mailto
+  }
+
+  // Fallback: open mailto link
+  const subject = encodeURIComponent(`🏊‍♂️ Tu código QR - Triatlón Race Club Hub - Dorsal #${participant.dorsal}`);
+  const body = encodeURIComponent(
+    `¡Hola ${participant.nombre}!\n\n` +
+    `Tu número de dorsal es: #${participant.dorsal}\n` +
+    `Categoría: ${participant.categoria}\n\n` +
+    `Presentá tu código QR el día de la carrera para hacer check-in rápido.\n\n` +
+    `Descargá tu QR aquí: ${window.location.origin}/qr.html?dorsal=${participant.dorsal}\n\n` +
+    `¡Nos vemos en la meta! 🏁\n\n` +
+    `- Equipo Race Club Hub`
+  );
+
+  window.open(`mailto:${participant.email}?subject=${subject}&body=${body}`, '_blank');
+}
+
+// Bulk send WhatsApp (opens one by one with a delay)
+async function bulkSendWhatsApp() {
+  const withPhone = allParticipantsCache.filter(p => p.telefono && p.telefono.trim());
+
+  if (withPhone.length === 0) {
+    alert('No hay participantes con número de teléfono registrado.');
+    return;
+  }
+
+  const confirmed = confirm(
+    `Se abrirán ${withPhone.length} ventanas de WhatsApp, una por cada atleta con teléfono registrado.\n\n` +
+    `Cada mensaje tendrá pre-escrito el texto con la info del atleta. Solo tenés que darle "Enviar" en cada uno.\n\n` +
+    `¿Continuar?`
+  );
+
+  if (!confirmed) return;
+
+  for (let i = 0; i < withPhone.length; i++) {
+    sendWhatsApp(withPhone[i].dorsal);
+    // Small delay between opens to avoid browser blocking
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+
+  alert(`✅ Se abrieron ${withPhone.length} conversaciones de WhatsApp.`);
+}
+
+// Bulk send Email
+async function bulkSendEmail() {
+  const withEmail = allParticipantsCache.filter(p => p.email && p.email.trim());
+
+  if (withEmail.length === 0) {
+    alert('No hay participantes con email registrado.');
+    return;
+  }
+
+  // Try server-side bulk email first
+  try {
+    const res = await fetch('/api/send-email-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      alert(`✅ Se enviaron ${data.sent} emails exitosamente.`);
+      return;
+    }
+  } catch (err) {
+    // Fall through to individual mailto
+  }
+
+  // Fallback: open individual mailto links
+  const confirmed = confirm(
+    `Se abrirán ${withEmail.length} ventanas de email.\n\n` +
+    `¿Continuar?`
+  );
+
+  if (!confirmed) return;
+
+  for (let i = 0; i < withEmail.length; i++) {
+    sendEmail(withEmail[i].dorsal);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}

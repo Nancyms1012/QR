@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Código QR - Race Club Hub</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e40af, #7c3aed);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+    .logo { font-size: 2rem; margin-bottom: 0.5rem; }
+    .title { font-size: 1.1rem; color: #6b7280; margin-bottom: 1.5rem; }
+    .dorsal { font-size: 3.5rem; font-weight: 800; color: #2563eb; }
+    .nombre { font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0; }
+    .categoria { color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem; }
+    #qr-container { margin: 1.5rem 0; }
+    #qr-container canvas { max-width: 250px; height: auto; }
+    .instructions {
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    .btn-download {
+      display: inline-block;
+      margin-top: 1rem;
+      background: #2563eb;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-size: 0.95rem;
+    }
+    .btn-download:hover { background: #1d4ed8; }
+    .error { color: #dc2626; margin-top: 1rem; }
+    @media print {
+      body { background: white; }
+      .card { box-shadow: none; }
+      .btn-download, .instructions { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🏊‍♂️🚴‍♂️🏃‍♂️</div>
+    <div class="title">Race Club Hub - Triatlón</div>
+    <div id="content">
+      <p style="color:#64748b;">Cargando...</p>
+    </div>
+  </div>
+
+  <script>
+    async function loadQR() {
+      const params = new URLSearchParams(window.location.search);
+      const dorsal = params.get('dorsal');
+      const content = document.getElementById('content');
+
+      if (!dorsal) {
+        content.innerHTML = '<p class="error">No se proporcionó un número de dorsal.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/participants/${dorsal}`);
+        if (!res.ok) throw new Error('No encontrado');
+        const p = await res.json();
+
+        content.innerHTML = `
+          <div class="dorsal">#${p.dorsal}</div>
+          <div class="nombre">${p.nombre}</div>
+          <div class="categoria">${p.categoria}</div>
+          <div id="qr-container">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+          <button class="btn-download" onclick="downloadQR()">📥 Descargar QR</button>
+          <div class="instructions">
+            <strong>📱 Instrucciones:</strong><br>
+            Presentá este código QR el día de la carrera para hacer tu check-in de forma rápida.
+            Podés guardar una captura de pantalla o descargarlo.
+          </div>
+        `;
+
+        const canvas = document.getElementById('qr-canvas');
+        const qrData = JSON.stringify({ dorsal: p.dorsal, nombre: p.nombre });
+        QRCode.toCanvas(canvas, qrData, { width: 250, margin: 2 }, (err) => {
+          if (err) console.error('QR error:', err);
+        });
+
+        document.title = `QR #${p.dorsal} - ${p.nombre} - Race Club Hub`;
+      } catch (err) {
+        content.innerHTML = `<p class="error">Participante no encontrado (dorsal: ${dorsal})</p>`;
+      }
+    }
+
+    function downloadQR() {
+      const canvas = document.getElementById('qr-canvas');
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = `qr-dorsal-${new URLSearchParams(window.location.search).get('dorsal')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    loadQR();
+  </script>
+</body>
+</html>
