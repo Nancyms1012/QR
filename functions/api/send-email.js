@@ -58,15 +58,18 @@ export async function onRequestPost(context) {
       text: generateEmailText(participant, qrPageUrl)
     };
 
-    // If we have a QR image, attach it
+    // If we have a QR image, attach it as inline CID image
     if (qrImageBase64 && qrImageBase64.startsWith('data:image/png;base64,')) {
       const base64Data = qrImageBase64.replace('data:image/png;base64,', '');
       emailPayload.attachments = [
         {
           filename: `qr-dorsal-${participant.dorsal}.png`,
-          content: base64Data
+          content: base64Data,
+          content_type: "image/png"
         }
       ];
+      // Update HTML to use the hosted QR page image as fallback
+      emailPayload.html = generateEmailHTML(participant, qrPageUrl, qrImageBase64, true);
     }
 
     // Send via Resend API
@@ -107,9 +110,19 @@ export async function onRequestPost(context) {
 }
 
 function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
-  const qrImageTag = qrImageBase64
-    ? `<img src="${qrImageBase64}" alt="Código QR" style="width:250px;height:250px;display:block;margin:0 auto;" />`
-    : `<p style="text-align:center;"><a href="${qrPageUrl}" style="display:inline-block;background:#2563eb;color:white;padding:0.85rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">📱 Ver mi Código QR</a></p>`;
+  let qrSection;
+  if (qrImageBase64 && qrImageBase64.startsWith('data:image/png;base64,')) {
+    qrSection = `
+      <img src="${qrImageBase64}" alt="Código QR - Dorsal #${participant.dorsal}" style="width:250px;height:250px;display:block;margin:0 auto;" />
+      <p style="font-size:0.75rem;color:#94a3b8;margin-top:0.5rem;text-align:center;">¿No ves el QR? <a href="${qrPageUrl}" style="color:#2563eb;">Click aquí</a></p>
+    `;
+  } else {
+    qrSection = `
+      <p style="text-align:center;">
+        <a href="${qrPageUrl}" style="display:inline-block;background:#2563eb;color:white;padding:0.85rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">📱 Ver mi Código QR</a>
+      </p>
+    `;
+  }
 
   return `
 <!DOCTYPE html>
@@ -130,7 +143,7 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
 
     <div style="text-align:center; padding: 1.5rem; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.5rem;">
       <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 0.75rem 0; font-weight: 600;">TU CÓDIGO QR:</p>
-      ${qrImageTag}
+      ${qrSection}
     </div>
 
     <table style="width:100%; border-collapse:collapse; margin-bottom: 1.5rem;">
