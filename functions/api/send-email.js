@@ -118,8 +118,8 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 2rem;">
   <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <div style="text-align: center; margin-bottom: 1.5rem;">
-      <h1 style="font-size: 1.5rem; color: #1e293b;">🏊‍♂️🚴‍♂️🏃‍♂️ XTERRA CR</h1>
-      <p style="color: #64748b;">Sistema de Check-in - Triatlón</p>
+      <img src="https://checkin.raceclubhub.com/logo-xterra.png" alt="XTERRA CR" style="max-width:200px;height:auto;margin-bottom:0.75rem;" />
+      <p style="color: #64748b; font-size: 0.9rem;">Sistema de Check-in - Triatlón</p>
     </div>
     
     <div style="text-align: center; padding: 1.5rem; background: #eff6ff; border-radius: 12px; margin-bottom: 1.5rem;">
