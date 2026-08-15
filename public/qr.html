@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Código QR - Race Club Hub</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="/lib/qrious.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -104,8 +104,11 @@
 
         const canvas = document.getElementById('qr-canvas');
         const qrData = JSON.stringify({ dorsal: p.dorsal, nombre: p.nombre });
-        QRCode.toCanvas(canvas, qrData, { width: 250, margin: 2 }, (err) => {
-          if (err) console.error('QR error:', err);
+        new QRious({
+          element: canvas,
+          value: qrData,
+          size: 250,
+          level: 'M'
         });
 
         document.title = `QR #${p.dorsal} - ${p.nombre} - Race Club Hub`;

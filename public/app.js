@@ -346,18 +346,21 @@ async function loadQRCodes() {
       </div>
     `).join('');
 
-    // Check if QRCode library is loaded
-    if (typeof QRCode === 'undefined') {
-      qrGrid.innerHTML = '<p style="color:red;">Error: librería QRCode no cargó. Revisá tu conexión a internet.</p>';
+    // Check if QRious library is loaded
+    if (typeof QRious === 'undefined') {
+      qrGrid.innerHTML = '<p style="color:red;">Error: librería QR no cargó.</p>';
       return;
     }
 
-    // Generate QR codes client-side using qrcode library
+    // Generate QR codes client-side using QRious library
     for (const p of participants) {
       const canvas = document.getElementById(`qr-canvas-${p.dorsal}`);
       const qrData = JSON.stringify({ dorsal: p.dorsal, nombre: p.nombre });
-      QRCode.toCanvas(canvas, qrData, { width: 150, margin: 1 }, (err) => {
-        if (err) console.error('QR error for', p.dorsal, err);
+      new QRious({
+        element: canvas,
+        value: qrData,
+        size: 150,
+        level: 'M'
       });
     }
   } catch (err) {
@@ -465,12 +468,14 @@ function renderSendList(query) {
 // Generate QR as data URL for a participant
 async function generateQRDataURL(participant) {
   const qrData = JSON.stringify({ dorsal: participant.dorsal, nombre: participant.nombre });
-  return new Promise((resolve, reject) => {
-    QRCode.toDataURL(qrData, { width: 300, margin: 2 }, (err, url) => {
-      if (err) reject(err);
-      else resolve(url);
-    });
+  const canvas = document.createElement('canvas');
+  new QRious({
+    element: canvas,
+    value: qrData,
+    size: 300,
+    level: 'M'
   });
+  return canvas.toDataURL('image/png');
 }
 
 // Send individual WhatsApp
