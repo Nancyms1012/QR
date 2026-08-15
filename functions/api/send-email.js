@@ -153,7 +153,7 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
     <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
       <p style="font-size: 0.85rem; color: #92400e; margin: 0;">
         <strong>⚠️ Verificá tu información:</strong><br>
-        Revisá que tu nombre, dorsal y categoría sean correctos. En caso de inconsistencia comunicarse con: info@raceclubhub.com
+        Revisá que tu nombre, dorsal y categoría sean correctos. En caso de inconsistencia comunicarse con: XXX
       </p>
     </div>
 
