@@ -453,8 +453,90 @@ if (btnBulkWhatsapp) {
   btnBulkWhatsapp.addEventListener('click', bulkSendWhatsApp);
 }
 
-if (btnBulkEmail) {
-  btnBulkEmail.addEventListener('click', bulkSendEmail);
+// Select all / Deselect all / Send selected
+const btnSelectAll = document.getElementById('btn-select-all');
+const btnDeselectAll = document.getElementById('btn-deselect-all');
+const btnSendSelectedEmail = document.getElementById('btn-send-selected-email');
+
+if (btnSelectAll) {
+  btnSelectAll.addEventListener('click', () => {
+    document.querySelectorAll('.participant-check:not(:disabled)').forEach(cb => cb.checked = true);
+    updateSelectedCount();
+  });
+}
+
+if (btnDeselectAll) {
+  btnDeselectAll.addEventListener('click', () => {
+    document.querySelectorAll('.participant-check').forEach(cb => cb.checked = false);
+    updateSelectedCount();
+  });
+}
+
+if (btnSendSelectedEmail) {
+  btnSendSelectedEmail.addEventListener('click', sendSelectedEmails);
+}
+
+// Listen for checkbox changes
+document.addEventListener('change', (e) => {
+  if (e.target.classList.contains('participant-check')) {
+    updateSelectedCount();
+  }
+});
+
+function updateSelectedCount() {
+  const selected = document.querySelectorAll('.participant-check:checked').length;
+  const countEl = document.getElementById('selected-count');
+  if (countEl) {
+    countEl.textContent = selected > 0 ? `✉️ ${selected} seleccionado(s) para envío por email` : '';
+  }
+}
+
+async function sendSelectedEmails() {
+  const checked = document.querySelectorAll('.participant-check:checked');
+  const dorsals = Array.from(checked).map(cb => parseInt(cb.dataset.dorsal));
+
+  if (dorsals.length === 0) {
+    alert('Seleccioná al menos un participante con la casilla ☑️');
+    return;
+  }
+
+  const confirmed = confirm(`¿Enviar email con QR a ${dorsals.length} participante(s) seleccionado(s)?`);
+  if (!confirmed) return;
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const dorsal of dorsals) {
+    try {
+      const participant = allParticipantsCache.find(p => p.dorsal === dorsal);
+      if (!participant || !participant.email) { failed++; continue; }
+
+      // Generate QR
+      const qrCanvas = document.createElement('canvas');
+      const qrData = JSON.stringify({ dorsal: participant.dorsal, nombre: participant.nombre });
+      new QRious({ element: qrCanvas, value: qrData, size: 250, level: 'M' });
+      const qrImage = qrCanvas.toDataURL('image/png');
+
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dorsal, qrImage })
+      });
+
+      if (res.ok) { sent++; } else { failed++; }
+    } catch (err) {
+      failed++;
+    }
+
+    // Delay for rate limiting
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+
+  alert(`✅ Envío completo:\n• Enviados: ${sent}\n• Fallidos: ${failed}`);
+
+  // Uncheck all after sending
+  document.querySelectorAll('.participant-check:checked').forEach(cb => cb.checked = false);
+  updateSelectedCount();
 }
 
 async function loadSendList() {
@@ -500,6 +582,9 @@ function renderSendList(query) {
 
     return `
       <div class="send-card" data-dorsal="${p.dorsal}">
+        <label class="send-checkbox">
+          <input type="checkbox" class="participant-check" data-dorsal="${p.dorsal}" ${hasEmail ? '' : 'disabled'} />
+        </label>
         <div class="send-info">
           <span class="dorsal">#${p.dorsal}</span>
           <div class="nombre">${p.nombre}</div>
@@ -524,6 +609,8 @@ function renderSendList(query) {
       </div>
     `;
   }).join('');
+
+  updateSelectedCount();
 }
 
 // Generate QR as data URL for a participant
@@ -745,41 +832,4 @@ async function bulkSendWhatsApp() {
   alert(`✅ Se abrieron ${withPhone.length} conversaciones de WhatsApp.`);
 }
 
-// Bulk send Email
-async function bulkSendEmail() {
-  const withEmail = allParticipantsCache.filter(p => p.email && p.email.trim());
-
-  if (withEmail.length === 0) {
-    alert('No hay participantes con email registrado.');
-    return;
-  }
-
-  // Try server-side bulk email first
-  try {
-    const res = await fetch('/api/send-email-bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      alert(`✅ Se enviaron ${data.sent} emails exitosamente.`);
-      return;
-    }
-  } catch (err) {
-    // Fall through to individual mailto
-  }
-
-  // Fallback: open individual mailto links
-  const confirmed = confirm(
-    `Se abrirán ${withEmail.length} ventanas de email.\n\n` +
-    `¿Continuar?`
-  );
-
-  if (!confirmed) return;
-
-  for (let i = 0; i < withEmail.length; i++) {
-    sendEmail(withEmail[i].dorsal);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-}
+// Bulk send Email (replaced by sendSelectedEmails with checkboxes)

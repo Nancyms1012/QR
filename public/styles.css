@@ -445,6 +445,24 @@ h2 {
   gap: 0.75rem;
 }
 
+.send-card .send-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.send-card .send-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.send-card .send-checkbox input[type="checkbox"]:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .send-card .send-info {
   flex: 1;
 }
