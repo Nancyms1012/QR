@@ -1,0 +1,14 @@
+{
+  "name": "triatlon-checkin",
+  "version": "1.0.0",
+  "description": "App de check-in para triatlón con códigos QR - Cloudflare Pages + Workers KV",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev public --kv=CHECKIN_KV --port=3000",
+    "deploy": "wrangler pages deploy public",
+    "seed": "node scripts/seed-kv.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.60.0"
+  }
+}

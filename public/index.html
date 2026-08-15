@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏊 Race Club Hub - Check-in</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🏊‍♂️🚴‍♂️🏃‍♂️ Race Club Hub</h1>
+    <p class="subtitle">Sistema de Check-in</p>
+    <nav>
+      <button class="nav-btn active" data-view="scanner">📷 Escáner</button>
+      <button class="nav-btn" data-view="manual">🔍 Buscar</button>
+      <button class="nav-btn" data-view="list">📋 Lista</button>
+      <button class="nav-btn" data-view="stats">📊 Stats</button>
+      <button class="nav-btn" data-view="qrcodes">🏷️ QR Codes</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- SCANNER VIEW -->
+    <section id="view-scanner" class="view active">
+      <div class="scanner-container">
+        <h2>Escanear Código QR</h2>
+        <div id="qr-reader"></div>
+        <div id="scanner-controls">
+          <button id="btn-start-scan" class="btn btn-primary">▶️ Iniciar Escáner</button>
+          <button id="btn-stop-scan" class="btn btn-danger" style="display:none;">⏹️ Detener</button>
+        </div>
+      </div>
+      <div id="scan-result" class="result-card hidden"></div>
+    </section>
+
+    <!-- MANUAL SEARCH VIEW -->
+    <section id="view-manual" class="view">
+      <h2>Búsqueda Manual</h2>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Buscar por dorsal o nombre..." autocomplete="off">
+        <button id="btn-search" class="btn btn-primary">Buscar</button>
+      </div>
+      <div id="search-results"></div>
+    </section>
+
+    <!-- LIST VIEW -->
+    <section id="view-list" class="view">
+      <h2>Lista de Participantes</h2>
+      <div class="filters">
+        <select id="filter-category">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="filter-status">
+          <option value="">Todos</option>
+          <option value="checked">✅ Registrados</option>
+          <option value="pending">⏳ Pendientes</option>
+        </select>
+      </div>
+      <div id="participants-list"></div>
+    </section>
+
+    <!-- STATS VIEW -->
+    <section id="view-stats" class="view">
+      <h2>Estadísticas de Check-in</h2>
+      <div id="stats-container"></div>
+    </section>
+
+    <!-- QR CODES VIEW -->
+    <section id="view-qrcodes" class="view">
+      <h2>Códigos QR de Participantes</h2>
+      <p class="hint">Imprime los QR y distribúyelos a los atletas antes de la carrera.</p>
+      <button id="btn-print-qr" class="btn btn-primary">🖨️ Imprimir</button>
+      <div id="qr-grid" class="qr-grid"></div>
+    </section>
+  </main>
+
+  <!-- CHECK-IN MODAL -->
+  <div id="checkin-modal" class="modal hidden">
+    <div class="modal-content">
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button id="btn-confirm-checkin" class="btn btn-success">✅ Confirmar Check-in</button>
+        <button id="btn-undo-checkin" class="btn btn-warning hidden">↩️ Revertir</button>
+        <button id="btn-close-modal" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
