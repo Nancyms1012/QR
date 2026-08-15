@@ -544,29 +544,128 @@ async function sendWhatsApp(dorsal) {
   const participant = allParticipantsCache.find(p => p.dorsal === dorsal);
   if (!participant || !participant.telefono) return;
 
-  // Clean phone number (remove spaces, dashes, etc) and ensure country code
-  let phone = participant.telefono.replace(/[\s\-\(\)\.]/g, '');
-  // If starts with 0, replace with Costa Rica code
-  if (phone.startsWith('0')) phone = '506' + phone.substring(1);
-  // If doesn't start with +, add Costa Rica code
-  if (!phone.startsWith('+') && !phone.startsWith('506') && phone.length <= 8) {
-    phone = '506' + phone;
-  }
-  // Remove + if present
-  phone = phone.replace('+', '');
+  // Generate QR image and trigger share/download
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 600;
+  canvas.height = 750;
 
-  const message = encodeURIComponent(
-    `🏊‍♂️🚴‍♂️🏃‍♂️ *Race Club Hub - Triatlón*\n\n` +
-    `¡Hola ${participant.nombre}! 👋\n\n` +
-    `Tu número de dorsal es: *#${participant.dorsal}*\n` +
-    `Categoría: ${participant.categoria}\n\n` +
-    `📱 Presentá tu código QR el día de la carrera para hacer check-in rápido.\n\n` +
-    `🔗 Descargá tu QR aquí: ${window.location.origin}/qr.html?dorsal=${participant.dorsal}\n\n` +
-    `¡Nos vemos en la meta! 🏁`
-  );
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 600, 750);
 
-  const waUrl = `https://wa.me/${phone}?text=${message}`;
-  window.open(waUrl, '_blank');
+  // Header
+  ctx.fillStyle = '#1e40af';
+  ctx.fillRect(0, 0, 600, 80);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏊‍♂️🚴‍♂️🏃‍♂️ Race Club Hub - Triatlón', 300, 50);
+
+  // Dorsal
+  ctx.fillStyle = '#2563eb';
+  ctx.font = 'bold 60px Arial, sans-serif';
+  ctx.fillText(`#${participant.dorsal}`, 300, 150);
+
+  // Name
+  ctx.fillStyle = '#1e293b';
+  ctx.font = 'bold 24px Arial, sans-serif';
+  ctx.fillText(participant.nombre, 300, 190);
+
+  // Category
+  ctx.fillStyle = '#64748b';
+  ctx.font = '18px Arial, sans-serif';
+  ctx.fillText(participant.categoria, 300, 220);
+
+  // QR Code - generate on a temporary canvas
+  const qrCanvas = document.createElement('canvas');
+  const qrData = JSON.stringify({ dorsal: participant.dorsal, nombre: participant.nombre });
+  new QRious({
+    element: qrCanvas,
+    value: qrData,
+    size: 300,
+    level: 'M'
+  });
+
+  // Draw QR on main canvas
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(148, 240, 304, 304);
+  ctx.drawImage(qrCanvas, 150, 242, 300, 300);
+
+  // Footer info
+  ctx.fillStyle = '#334155';
+  ctx.font = '16px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📱 Presentá este QR el día de la carrera', 300, 580);
+  ctx.fillText('para hacer check-in rápido', 300, 605);
+
+  // Info table
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#64748b';
+  ctx.font = '14px Arial, sans-serif';
+  ctx.fillText('👤 Nombre:', 100, 650);
+  ctx.fillText('🔢 Dorsal:', 100, 675);
+  ctx.fillText('🏷️ Categoría:', 100, 700);
+
+  ctx.fillStyle = '#1e293b';
+  ctx.font = 'bold 14px Arial, sans-serif';
+  ctx.fillText(participant.nombre, 220, 650);
+  ctx.fillText(`#${participant.dorsal}`, 220, 675);
+  ctx.fillText(participant.categoria, 220, 700);
+
+  // Footer brand
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('raceclubhub.com · ¡Nos vemos en la meta! 🏁', 300, 735);
+
+  // Try Web Share API (works great on mobile)
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], `qr-${participant.dorsal}-${participant.nombre.replace(/\s/g, '_')}.png`, { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          text: `🏊‍♂️ Race Club Hub - Triatlón\n¡Hola ${participant.nombre}! Tu dorsal es #${participant.dorsal} (${participant.categoria}).\nPresentá este QR para check-in rápido. ¡Nos vemos en la meta! 🏁`,
+          files: [file]
+        });
+        return;
+      } catch (e) {
+        // User cancelled or error, fall through to download + WhatsApp
+      }
+    }
+
+    // Fallback: download image + open WhatsApp with text
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = file.name;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    // Then open WhatsApp with text message
+    let phone = participant.telefono.replace(/[\s\-\(\)\.]/g, '');
+    if (phone.startsWith('0')) phone = '506' + phone.substring(1);
+    if (!phone.startsWith('+') && !phone.startsWith('506') && phone.length <= 8) {
+      phone = '506' + phone;
+    }
+    phone = phone.replace('+', '');
+
+    const message = encodeURIComponent(
+      `🏊‍♂️🚴‍♂️🏃‍♂️ *Race Club Hub - Triatlón*\n\n` +
+      `¡Hola ${participant.nombre}! 👋\n\n` +
+      `Tu dorsal: *#${participant.dorsal}*\n` +
+      `Categoría: ${participant.categoria}\n\n` +
+      `📱 Te envío tu código QR como imagen. Presentalo el día de la carrera para check-in rápido.\n\n` +
+      `¡Nos vemos en la meta! 🏁`
+    );
+
+    setTimeout(() => {
+      window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+      alert('💡 La imagen del QR se descargó. Adjuntala en el chat de WhatsApp que se acaba de abrir.');
+    }, 500);
+  }, 'image/png');
 }
 
 // Send individual Email
@@ -574,16 +673,27 @@ async function sendEmail(dorsal) {
   const participant = allParticipantsCache.find(p => p.dorsal === dorsal);
   if (!participant || !participant.email) return;
 
-  // Try server-side email first
+  // Generate QR image as base64 to embed in email
+  const qrCanvas = document.createElement('canvas');
+  const qrData = JSON.stringify({ dorsal: participant.dorsal, nombre: participant.nombre });
+  new QRious({
+    element: qrCanvas,
+    value: qrData,
+    size: 250,
+    level: 'M'
+  });
+  const qrImage = qrCanvas.toDataURL('image/png');
+
+  // Try server-side email with embedded QR
   try {
     const res = await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dorsal: participant.dorsal })
+      body: JSON.stringify({ dorsal: participant.dorsal, qrImage })
     });
 
     if (res.ok) {
-      alert(`✅ Email enviado a ${participant.email}`);
+      alert(`✅ Email enviado a ${participant.email} con el QR incluido`);
       return;
     }
   } catch (err) {
@@ -594,10 +704,14 @@ async function sendEmail(dorsal) {
   const subject = encodeURIComponent(`🏊‍♂️ Tu código QR - Triatlón Race Club Hub - Dorsal #${participant.dorsal}`);
   const body = encodeURIComponent(
     `¡Hola ${participant.nombre}!\n\n` +
-    `Tu número de dorsal es: #${participant.dorsal}\n` +
-    `Categoría: ${participant.categoria}\n\n` +
+    `Tu información para la carrera:\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `👤 Nombre: ${participant.nombre}\n` +
+    `🔢 Dorsal: #${participant.dorsal}\n` +
+    `🏷️ Categoría: ${participant.categoria}\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `📱 Descargá tu QR aquí: ${window.location.origin}/qr.html?dorsal=${participant.dorsal}\n\n` +
     `Presentá tu código QR el día de la carrera para hacer check-in rápido.\n\n` +
-    `Descargá tu QR aquí: ${window.location.origin}/qr.html?dorsal=${participant.dorsal}\n\n` +
     `¡Nos vemos en la meta! 🏁\n\n` +
     `- Equipo Race Club Hub`
   );

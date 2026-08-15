@@ -3,7 +3,9 @@ export async function onRequestPost(context) {
   const { env, request } = context;
 
   try {
-    const { dorsal } = await request.json();
+    const body = await request.json();
+    const dorsal = body.dorsal;
+    const qrImageBase64 = body.qrImage; // Base64 QR image from client
 
     if (!dorsal) {
       return new Response(JSON.stringify({ error: "Dorsal requerido" }), {
@@ -35,16 +37,15 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Get the site URL for the QR link
     const siteUrl = new URL(request.url).origin;
     const qrPageUrl = `${siteUrl}/qr.html?dorsal=${participant.dorsal}`;
 
-    // Send email via MailChannels
+    // Send email via MailChannels with QR image embedded
     const emailResult = await sendMailChannels({
       to: participant.email,
       toName: participant.nombre,
       subject: `🏊‍♂️ Tu Código QR - Triatlón Race Club Hub - Dorsal #${participant.dorsal}`,
-      htmlBody: generateEmailHTML(participant, qrPageUrl),
+      htmlBody: generateEmailHTML(participant, qrPageUrl, qrImageBase64),
       textBody: generateEmailText(participant, qrPageUrl),
       fromEmail: env.FROM_EMAIL || "checkin@raceclubhub.com",
       fromName: env.FROM_NAME || "Race Club Hub",
@@ -77,7 +78,6 @@ export async function onRequestPost(context) {
   }
 }
 
-// Send email using MailChannels API (free for Cloudflare Workers)
 async function sendMailChannels({ to, toName, subject, htmlBody, textBody, fromEmail, fromName, dkimDomain, dkimSelector, dkimPrivateKey }) {
   const emailPayload = {
     personalizations: [
@@ -93,7 +93,6 @@ async function sendMailChannels({ to, toName, subject, htmlBody, textBody, fromE
     ]
   };
 
-  // Add DKIM if configured
   if (dkimDomain && dkimSelector && dkimPrivateKey) {
     emailPayload.personalizations[0].dkim_domain = dkimDomain;
     emailPayload.personalizations[0].dkim_selector = dkimSelector;
@@ -118,7 +117,12 @@ async function sendMailChannels({ to, toName, subject, htmlBody, textBody, fromE
   }
 }
 
-function generateEmailHTML(participant, qrPageUrl) {
+function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
+  // If we have a base64 QR image, embed it directly
+  const qrImageTag = qrImageBase64
+    ? `<img src="${qrImageBase64}" alt="Código QR" style="width:250px;height:250px;display:block;margin:0 auto;" />`
+    : `<p style="text-align:center;"><a href="${qrPageUrl}" style="display:inline-block;background:#2563eb;color:white;padding:0.85rem 2rem;border-radius:8px;text-decoration:none;font-weight:600;">📱 Ver mi Código QR</a></p>`;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -136,25 +140,31 @@ function generateEmailHTML(participant, qrPageUrl) {
       <p style="color: #64748b; margin: 0;">${participant.categoria}</p>
     </div>
 
-    <p style="color: #334155; line-height: 1.6;">
-      ¡Hola <strong>${participant.nombre}</strong>! 👋
-    </p>
-    <p style="color: #334155; line-height: 1.6;">
-      Tu número de dorsal para el triatlón es <strong>#${participant.dorsal}</strong>. 
-      Hacé click en el botón de abajo para ver y descargar tu código QR personal.
-    </p>
-
-    <div style="text-align: center; margin: 2rem 0;">
-      <a href="${qrPageUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 0.85rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1rem;">
-        📱 Ver mi Código QR
-      </a>
+    <div style="text-align:center; padding: 1.5rem; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.5rem;">
+      <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 0.75rem 0; font-weight: 600;">TU CÓDIGO QR:</p>
+      ${qrImageTag}
     </div>
 
-    <div style="background: #f8fafc; border-radius: 10px; padding: 1rem; border: 1px solid #e2e8f0;">
-      <p style="font-size: 0.85rem; color: #475569; margin: 0;">
-        <strong>📋 Instrucciones:</strong><br>
-        Presentá tu código QR el día de la carrera para hacer el check-in de forma rápida. 
-        Podés guardar una captura de pantalla o descargarlo desde el link.
+    <table style="width:100%; border-collapse:collapse; margin-bottom: 1.5rem;">
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">👤 Nombre</td>
+        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">${participant.nombre}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">🔢 Dorsal</td>
+        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">#${participant.dorsal}</td>
+      </tr>
+      <tr>
+        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">🏷️ Categoría</td>
+        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">${participant.categoria}</td>
+      </tr>
+    </table>
+
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem;">
+      <p style="font-size: 0.85rem; color: #166534; margin: 0;">
+        <strong>📱 Instrucciones:</strong><br>
+        Presentá este código QR el día de la carrera para hacer el check-in de forma rápida. 
+        Podés guardar una captura de pantalla o descargarlo.
       </p>
     </div>
 
@@ -174,8 +184,12 @@ function generateEmailText(participant, qrPageUrl) {
 
 ¡Hola ${participant.nombre}! 👋
 
-Tu número de dorsal es: #${participant.dorsal}
-Categoría: ${participant.categoria}
+Tu información para la carrera:
+━━━━━━━━━━━━━━━━━━━━
+👤 Nombre:    ${participant.nombre}
+🔢 Dorsal:    #${participant.dorsal}
+🏷️ Categoría: ${participant.categoria}
+━━━━━━━━━━━━━━━━━━━━
 
 📱 Descargá tu código QR aquí: ${qrPageUrl}
 
