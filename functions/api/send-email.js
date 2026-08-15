@@ -135,31 +135,27 @@ function generateEmailHTML(participant, qrPageUrl, qrImageBase64) {
       <p style="color: #64748b; font-size: 0.9rem;">Sistema de Check-in - Triatlón</p>
     </div>
     
-    <div style="text-align: center; padding: 1.5rem; background: #eff6ff; border-radius: 12px; margin-bottom: 1.5rem;">
-      <p style="font-size: 3rem; font-weight: 800; color: #2563eb; margin: 0;">#${participant.dorsal}</p>
-      <p style="font-size: 1.3rem; font-weight: 600; margin: 0.5rem 0;">${participant.nombre}</p>
-      <p style="color: #64748b; margin: 0;">${participant.categoria}</p>
-    </div>
+    <table style="width:100%; border-collapse:collapse; margin-bottom: 1.5rem; background: #eff6ff; border-radius: 12px;">
+      <tr>
+        <td style="padding: 1.5rem; text-align: center;">
+          <p style="font-size: 3rem; font-weight: 800; color: #2563eb; margin: 0;">#${participant.dorsal}</p>
+          <p style="font-size: 1.3rem; font-weight: 600; margin: 0.5rem 0;">${participant.nombre}</p>
+          <p style="color: #64748b; margin: 0;">${participant.categoria}</p>
+        </td>
+      </tr>
+    </table>
 
     <div style="text-align:center; padding: 1.5rem; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.5rem;">
       <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 0.75rem 0; font-weight: 600;">TU CÓDIGO QR:</p>
       ${qrSection}
     </div>
 
-    <table style="width:100%; border-collapse:collapse; margin-bottom: 1.5rem;">
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">👤 Nombre</td>
-        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">${participant.nombre}</td>
-      </tr>
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">🔢 Dorsal</td>
-        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">#${participant.dorsal}</td>
-      </tr>
-      <tr>
-        <td style="padding: 0.5rem; color: #64748b; font-size: 0.9rem;">🏷️ Categoría</td>
-        <td style="padding: 0.5rem; font-weight: 600; font-size: 0.9rem;">${participant.categoria}</td>
-      </tr>
-    </table>
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
+      <p style="font-size: 0.85rem; color: #92400e; margin: 0;">
+        <strong>⚠️ Verificá tu información:</strong><br>
+        Revisá que tu nombre, dorsal y categoría sean correctos. En caso de inconsistencia comunicarse con: info@raceclubhub.com
+      </p>
+    </div>
 
     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem;">
       <p style="font-size: 0.85rem; color: #166534; margin: 0;">
