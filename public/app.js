@@ -331,7 +331,12 @@ async function loadQRCodes() {
 
   try {
     const res = await fetch('/api/participants');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const participants = await res.json();
+
+    if (!Array.isArray(participants)) {
+      throw new Error(participants.error || 'Respuesta inválida');
+    }
 
     qrGrid.innerHTML = participants.map(p => `
       <div class="qr-card">
@@ -340,6 +345,12 @@ async function loadQRCodes() {
         <div class="qr-nombre">${p.nombre}</div>
       </div>
     `).join('');
+
+    // Check if QRCode library is loaded
+    if (typeof QRCode === 'undefined') {
+      qrGrid.innerHTML = '<p style="color:red;">Error: librería QRCode no cargó. Revisá tu conexión a internet.</p>';
+      return;
+    }
 
     // Generate QR codes client-side using qrcode library
     for (const p of participants) {
@@ -350,7 +361,7 @@ async function loadQRCodes() {
       });
     }
   } catch (err) {
-    qrGrid.innerHTML = '<p style="color:red;">Error al cargar participantes</p>';
+    qrGrid.innerHTML = `<p style="color:red;">Error al cargar participantes: ${err.message}</p>`;
   }
 }
 
