@@ -192,6 +192,67 @@ modal.addEventListener('click', (e) => {
   }
 });
 
+// ============ EDIT CONTACT ============
+const editModal = document.getElementById('edit-modal');
+const editTelefono = document.getElementById('edit-telefono');
+const editEmail = document.getElementById('edit-email');
+const btnEditContact = document.getElementById('btn-edit-contact');
+const btnSaveContact = document.getElementById('btn-save-contact');
+const btnCancelEdit = document.getElementById('btn-cancel-edit');
+
+btnEditContact.addEventListener('click', () => {
+  if (!currentParticipant) return;
+  document.getElementById('edit-participant-info').innerHTML = `
+    <strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}
+  `;
+  editTelefono.value = currentParticipant.telefono || '';
+  editEmail.value = currentParticipant.email || '';
+  modal.classList.add('hidden');
+  editModal.classList.remove('hidden');
+});
+
+btnCancelEdit.addEventListener('click', () => {
+  editModal.classList.add('hidden');
+  if (currentParticipant) {
+    modal.classList.remove('hidden');
+  }
+});
+
+editModal.addEventListener('click', (e) => {
+  if (e.target === editModal) {
+    editModal.classList.add('hidden');
+  }
+});
+
+btnSaveContact.addEventListener('click', async () => {
+  if (!currentParticipant) return;
+
+  const telefono = editTelefono.value.trim();
+  const email = editEmail.value.trim();
+
+  try {
+    const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telefono, email })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`✅ Datos actualizados para ${currentParticipant.nombre}`);
+      currentParticipant.telefono = telefono;
+      currentParticipant.email = email;
+      editModal.classList.add('hidden');
+      showCheckinModal(currentParticipant.dorsal);
+    } else {
+      alert('❌ Error: ' + (data.error || 'No se pudo guardar'));
+    }
+  } catch (err) {
+    alert('❌ Error de conexión');
+  }
+});
+
 // ============ MANUAL SEARCH ============
 const searchInput = document.getElementById('search-input');
 const btnSearch = document.getElementById('btn-search');

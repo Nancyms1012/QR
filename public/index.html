@@ -104,7 +104,26 @@
       <div class="modal-actions">
         <button id="btn-confirm-checkin" class="btn btn-success">✅ Confirmar Check-in</button>
         <button id="btn-undo-checkin" class="btn btn-warning hidden">↩️ Revertir</button>
+        <button id="btn-edit-contact" class="btn btn-primary">✏️ Editar</button>
         <button id="btn-close-modal" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT CONTACT MODAL -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 style="text-align:center;margin-bottom:1rem;">✏️ Editar Datos de Contacto</h3>
+      <div id="edit-participant-info" style="text-align:center;margin-bottom:1rem;"></div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <label style="font-size:0.85rem;color:#64748b;">📱 Teléfono (con código de país, ej: 50688881234)</label>
+        <input type="tel" id="edit-telefono" placeholder="50688881234" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+        <label style="font-size:0.85rem;color:#64748b;">📧 Email</label>
+        <input type="email" id="edit-email" placeholder="correo@ejemplo.com" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+      </div>
+      <div class="modal-actions" style="margin-top:1.5rem;">
+        <button id="btn-save-contact" class="btn btn-success">💾 Guardar</button>
+        <button id="btn-cancel-edit" class="btn btn-secondary">Cancelar</button>
       </div>
     </div>
   </div>
