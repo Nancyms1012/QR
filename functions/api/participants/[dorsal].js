@@ -33,7 +33,9 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({
       ...participant,
       checkedIn: checkin ? checkin.checkedIn : false,
-      checkInTime: checkin ? checkin.checkInTime : null
+      checkInTime: checkin ? checkin.checkInTime : null,
+      kitRetirado: checkin ? checkin.kitRetirado : false,
+      kitRetiroTime: checkin ? checkin.kitRetiroTime : null
     }), {
       headers: { "Content-Type": "application/json" }
     });

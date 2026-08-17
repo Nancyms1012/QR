@@ -107,8 +107,12 @@ async function showCheckinModal(dorsal) {
     currentParticipant = await res.json();
 
     const isChecked = currentParticipant.checkedIn;
+    const isKit = currentParticipant.kitRetirado;
     const checkTime = currentParticipant.checkInTime
       ? new Date(currentParticipant.checkInTime).toLocaleString('es-CR')
+      : '';
+    const kitTime = currentParticipant.kitRetiroTime
+      ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
       : '';
 
     modalBody.innerHTML = `
@@ -116,16 +120,35 @@ async function showCheckinModal(dorsal) {
       <div class="nombre-big">${currentParticipant.nombre}</div>
       <div class="categoria-big">${currentParticipant.categoria}</div>
       ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
-      <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
-        ${isChecked ? `✅ Ya registrado - ${checkTime}` : '⏳ Pendiente de check-in'}
+      <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;">
+        <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
+          ${isChecked ? `✅ Registro: ${checkTime}` : '⏳ Registro: Pendiente'}
+        </div>
+        <div class="status-badge ${isKit ? 'checked' : 'pending'}">
+          ${isKit ? `📦 Kit retirado: ${kitTime}` : '📦 Kit: Pendiente'}
+        </div>
       </div>
     `;
 
+    const btnConfirmCheckin = document.getElementById('btn-confirm-checkin');
+    const btnConfirmKit = document.getElementById('btn-confirm-kit');
+
+    // Show/hide buttons based on status
     if (isChecked) {
       btnConfirmCheckin.classList.add('hidden');
-      btnUndoCheckin.classList.remove('hidden');
     } else {
       btnConfirmCheckin.classList.remove('hidden');
+    }
+
+    if (isKit) {
+      btnConfirmKit.classList.add('hidden');
+    } else {
+      btnConfirmKit.classList.remove('hidden');
+    }
+
+    if (isChecked || isKit) {
+      btnUndoCheckin.classList.remove('hidden');
+    } else {
       btnUndoCheckin.classList.add('hidden');
     }
 
@@ -138,24 +161,21 @@ async function showCheckinModal(dorsal) {
 btnConfirmCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
   try {
-    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, { method: 'POST' });
+    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'registro' })
+    });
     const data = await res.json();
 
     if (res.ok) {
       currentParticipant = data.participant;
-      modalBody.innerHTML = `
-        <div style="text-align:center; font-size:4rem;">✅</div>
-        <div class="nombre-big">${currentParticipant.nombre}</div>
-        <div class="dorsal-big" style="font-size:2rem;">#${currentParticipant.dorsal}</div>
-        <div class="status-badge checked">¡Check-in exitoso!</div>
-      `;
-      btnConfirmCheckin.classList.add('hidden');
-      btnUndoCheckin.classList.remove('hidden');
+      showCheckinModal(currentParticipant.dorsal);
 
       scanResult.classList.remove('hidden');
       scanResult.className = 'result-card success';
       scanResult.innerHTML = `
-        <h3>✅ Check-in exitoso</h3>
+        <h3>✅ Registro exitoso</h3>
         <p><strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}</p>
         <p style="color:#64748b">${currentParticipant.categoria}</p>
       `;
@@ -164,6 +184,37 @@ btnConfirmCheckin.addEventListener('click', async () => {
     }
   } catch (err) {
     alert('Error al hacer check-in');
+  }
+});
+
+// Kit pickup check-in
+const btnConfirmKit = document.getElementById('btn-confirm-kit');
+btnConfirmKit.addEventListener('click', async () => {
+  if (!currentParticipant) return;
+  try {
+    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'kit' })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      currentParticipant = data.participant;
+      showCheckinModal(currentParticipant.dorsal);
+
+      scanResult.classList.remove('hidden');
+      scanResult.className = 'result-card success';
+      scanResult.innerHTML = `
+        <h3>📦 Kit entregado</h3>
+        <p><strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}</p>
+        <p style="color:#64748b">${currentParticipant.categoria}</p>
+      `;
+    } else {
+      alert(data.message || data.error);
+    }
+  } catch (err) {
+    alert('Error al registrar retiro de kit');
   }
 });
 
@@ -343,15 +394,20 @@ async function loadParticipantsList() {
 }
 
 function createParticipantCard(p) {
+  const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
+  let statusIcon = '⏳';
+  if (p.checkedIn && p.kitRetirado) statusIcon = '✅📦';
+  else if (p.checkedIn) statusIcon = '✅';
+  
   return `
-    <div class="participant-card ${p.checkedIn ? 'checked' : 'pending'}" data-dorsal="${p.dorsal}">
+    <div class="participant-card ${statusClass}" data-dorsal="${p.dorsal}">
       <div class="participant-info">
         <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${p.nombre}</div>
         <span class="categoria">${p.categoria}</span>
         ${p.talla ? `<span class="categoria" style="margin-left:0.3rem;">👕 ${p.talla}</span>` : ''}
       </div>
-      <div class="participant-status">${p.checkedIn ? '✅' : '⏳'}</div>
+      <div class="participant-status">${statusIcon}</div>
     </div>
   `;
 }
@@ -369,26 +425,36 @@ async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     const stats = await res.json();
-    const percentage = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
+    const pctRegistro = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
+    const pctKit = stats.total > 0 ? Math.round((stats.kitRetirado / stats.total) * 100) : 0;
 
     let categoriesHTML = '';
     for (const [cat, data] of Object.entries(stats.categories)) {
-      const catPct = data.total > 0 ? Math.round((data.checkedIn / data.total) * 100) : 0;
+      const catPctR = data.total > 0 ? Math.round((data.checkedIn / data.total) * 100) : 0;
+      const catPctK = data.total > 0 ? Math.round((data.kitRetirado / data.total) * 100) : 0;
       categoriesHTML += `
         <div class="stat-card">
           <h3>${cat}</h3>
-          <p><strong>${data.checkedIn}</strong> / ${data.total}</p>
-          <div class="progress-bar"><div class="progress-fill" style="width: ${catPct}%"></div></div>
+          <p>✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
+          <div class="progress-bar"><div class="progress-fill" style="width: ${catPctR}%"></div></div>
+          <p style="margin-top:0.4rem;">📦 Kit: <strong>${data.kitRetirado}</strong> / ${data.total}</p>
+          <div class="progress-bar"><div class="progress-fill" style="width: ${catPctK}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div></div>
         </div>
       `;
     }
 
     document.getElementById('stats-container').innerHTML = `
       <div class="stat-card">
-        <h3>Progreso General</h3>
+        <h3>✅ Check-in Registro</h3>
         <div class="stat-number">${stats.checkedIn} / ${stats.total}</div>
-        <p style="color:var(--text-light)">${percentage}% registrados · ${stats.pending} pendientes</p>
-        <div class="progress-bar"><div class="progress-fill" style="width: ${percentage}%"></div></div>
+        <p style="color:var(--text-light)">${pctRegistro}% registrados · ${stats.pendingRegistro} pendientes</p>
+        <div class="progress-bar"><div class="progress-fill" style="width: ${pctRegistro}%"></div></div>
+      </div>
+      <div class="stat-card">
+        <h3>📦 Retiro de Kit</h3>
+        <div class="stat-number">${stats.kitRetirado} / ${stats.total}</div>
+        <p style="color:var(--text-light)">${pctKit}% retirados · ${stats.pendingKit} pendientes</p>
+        <div class="progress-bar"><div class="progress-fill" style="width: ${pctKit}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div></div>
       </div>
       <div class="stat-grid">${categoriesHTML}</div>
     `;

@@ -1,4 +1,4 @@
-// GET /api/stats - Get check-in statistics
+// GET /api/stats - Get check-in statistics (both stages)
 export async function onRequestGet(context) {
   const { env } = context;
 
@@ -13,25 +13,31 @@ export async function onRequestGet(context) {
 
     const total = participantsRaw.length;
     let checkedIn = 0;
+    let kitRetirado = 0;
     const categories = {};
 
     for (const p of participantsRaw) {
       const checkin = await env.CHECKIN_KV.get(`checkin:${p.dorsal}`, { type: "json" });
       const isChecked = checkin ? checkin.checkedIn : false;
+      const isKit = checkin ? checkin.kitRetirado : false;
 
       if (isChecked) checkedIn++;
+      if (isKit) kitRetirado++;
 
       if (!categories[p.categoria]) {
-        categories[p.categoria] = { total: 0, checkedIn: 0 };
+        categories[p.categoria] = { total: 0, checkedIn: 0, kitRetirado: 0 };
       }
       categories[p.categoria].total++;
       if (isChecked) categories[p.categoria].checkedIn++;
+      if (isKit) categories[p.categoria].kitRetirado++;
     }
 
     return new Response(JSON.stringify({
       total,
       checkedIn,
-      pending: total - checkedIn,
+      kitRetirado,
+      pendingRegistro: total - checkedIn,
+      pendingKit: total - kitRetirado,
       categories
     }), {
       headers: { "Content-Type": "application/json" }

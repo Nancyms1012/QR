@@ -31,7 +31,9 @@ export async function onRequestGet(context) {
         return {
           ...p,
           checkedIn: checkin ? checkin.checkedIn : false,
-          checkInTime: checkin ? checkin.checkInTime : null
+          checkInTime: checkin ? checkin.checkInTime : null,
+          kitRetirado: checkin ? checkin.kitRetirado : false,
+          kitRetiroTime: checkin ? checkin.kitRetiroTime : null
         };
       })
     );
