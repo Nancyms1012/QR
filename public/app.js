@@ -14,6 +14,7 @@ navButtons.forEach(btn => {
     if (viewId === 'stats') loadStats();
     if (viewId === 'qrcodes') loadQRCodes();
     if (viewId === 'send') loadSendList();
+    if (viewId === 'admin') initAdmin();
   });
 });
 
@@ -114,6 +115,7 @@ async function showCheckinModal(dorsal) {
       <div class="dorsal-big">#${currentParticipant.dorsal}</div>
       <div class="nombre-big">${currentParticipant.nombre}</div>
       <div class="categoria-big">${currentParticipant.categoria}</div>
+      ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
       <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
         ${isChecked ? `✅ Ya registrado - ${checkTime}` : '⏳ Pendiente de check-in'}
       </div>
@@ -205,6 +207,9 @@ btnEditContact.addEventListener('click', () => {
   document.getElementById('edit-participant-info').innerHTML = `
     <strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}
   `;
+  document.getElementById('edit-nombre').value = currentParticipant.nombre || '';
+  document.getElementById('edit-categoria').value = currentParticipant.categoria || '';
+  document.getElementById('edit-talla').value = currentParticipant.talla || '';
   editTelefono.value = currentParticipant.telefono || '';
   editEmail.value = currentParticipant.email || '';
   modal.classList.add('hidden');
@@ -227,6 +232,9 @@ editModal.addEventListener('click', (e) => {
 btnSaveContact.addEventListener('click', async () => {
   if (!currentParticipant) return;
 
+  const nombre = document.getElementById('edit-nombre').value.trim();
+  const categoria = document.getElementById('edit-categoria').value.trim();
+  const talla = document.getElementById('edit-talla').value.trim();
   const telefono = editTelefono.value.trim();
   const email = editEmail.value.trim();
 
@@ -234,13 +242,16 @@ btnSaveContact.addEventListener('click', async () => {
     const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telefono, email })
+      body: JSON.stringify({ nombre, categoria, talla, telefono, email })
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert(`✅ Datos actualizados para ${currentParticipant.nombre}`);
+      alert(`✅ Datos actualizados para ${nombre || currentParticipant.nombre}`);
+      currentParticipant.nombre = nombre;
+      currentParticipant.categoria = categoria;
+      currentParticipant.talla = talla;
       currentParticipant.telefono = telefono;
       currentParticipant.email = email;
       editModal.classList.add('hidden');
@@ -338,6 +349,7 @@ function createParticipantCard(p) {
         <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${p.nombre}</div>
         <span class="categoria">${p.categoria}</span>
+        ${p.talla ? `<span class="categoria" style="margin-left:0.3rem;">👕 ${p.talla}</span>` : ''}
       </div>
       <div class="participant-status">${p.checkedIn ? '✅' : '⏳'}</div>
     </div>
@@ -833,3 +845,158 @@ async function bulkSendWhatsApp() {
 }
 
 // Bulk send Email (replaced by sendSelectedEmails with checkboxes)
+
+
+
+// ============ ADMIN - UPLOAD + RESET ============
+function initAdmin() {
+  // Already initialized via event listeners below
+}
+
+// File upload
+const btnUpload = document.getElementById('btn-upload');
+const fileUpload = document.getElementById('file-upload');
+const uploadMode = document.getElementById('upload-mode');
+const uploadResult = document.getElementById('upload-result');
+
+if (btnUpload) {
+  btnUpload.addEventListener('click', handleFileUpload);
+}
+
+async function handleFileUpload() {
+  const file = fileUpload.files[0];
+  if (!file) {
+    alert('Seleccioná un archivo primero');
+    return;
+  }
+
+  uploadResult.innerHTML = '<p style="color:#64748b;">⏳ Procesando archivo...</p>';
+
+  try {
+    let participants = [];
+
+    if (file.name.endsWith('.json')) {
+      // JSON file
+      const text = await file.text();
+      participants = JSON.parse(text);
+    } else if (file.name.endsWith('.csv')) {
+      // CSV file
+      const text = await file.text();
+      participants = parseCSV(text);
+    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      // Excel - parse as CSV (basic support)
+      uploadResult.innerHTML = '<p style="color:#f59e0b;">⚠️ Para archivos Excel, exportá como CSV primero (Archivo → Guardar como → CSV). O usá formato JSON.</p>';
+      return;
+    } else {
+      alert('Formato no soportado. Usá CSV o JSON.');
+      return;
+    }
+
+    if (participants.length === 0) {
+      uploadResult.innerHTML = '<p style="color:red;">❌ No se encontraron participantes en el archivo</p>';
+      return;
+    }
+
+    const mode = uploadMode.value;
+    const confirmed = confirm(
+      mode === 'replace'
+        ? `⚠️ REEMPLAZAR: Esto va a reemplazar TODOS los participantes actuales con los ${participants.length} del archivo. ¿Continuar?`
+        : `Fusionar: Se van a agregar/actualizar ${participants.length} participantes. Los existentes se mantienen. ¿Continuar?`
+    );
+
+    if (!confirmed) {
+      uploadResult.innerHTML = '';
+      return;
+    }
+
+    const res = await fetch('/api/upload-participants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participants, mode })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      uploadResult.innerHTML = `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1rem;">
+          <p style="color:#166534;font-weight:600;margin:0;">✅ ${data.message}</p>
+          <p style="color:#166534;font-size:0.85rem;margin:0.5rem 0 0;">Total participantes: ${data.total}</p>
+          ${data.invalid && data.invalid.length > 0 ? `<p style="color:#92400e;font-size:0.85rem;margin:0.5rem 0 0;">⚠️ ${data.invalid.length} filas inválidas (sin dorsal o nombre)</p>` : ''}
+        </div>
+      `;
+    } else {
+      uploadResult.innerHTML = `<p style="color:red;">❌ Error: ${data.error}</p>`;
+    }
+  } catch (err) {
+    uploadResult.innerHTML = `<p style="color:red;">❌ Error procesando archivo: ${err.message}</p>`;
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  // Parse header - normalize column names
+  const header = lines[0].split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, ''));
+
+  // Map common column name variations
+  const colMap = {};
+  header.forEach((h, i) => {
+    if (h.includes('DORSAL') || h === 'NUM' || h === 'NUMERO' || h === 'BIB') colMap.dorsal = i;
+    else if (h.includes('NOMBRE') || h === 'NAME' || h.includes('NOMBRE_BD')) colMap.nombre = i;
+    else if (h.includes('CATEG') || h.includes('CATEGORY') || h.includes('NUEVA_CATEGORIA')) colMap.categoria = i;
+    else if (h.includes('TEL') || h.includes('PHONE') || h.includes('CEL')) colMap.telefono = i;
+    else if (h.includes('EMAIL') || h.includes('CORREO') || h.includes('MAIL')) colMap.email = i;
+    else if (h.includes('TALLA') || h.includes('SIZE') || h.includes('JERSEY')) colMap.talla = i;
+  });
+
+  if (colMap.dorsal === undefined || colMap.nombre === undefined) {
+    // Try to detect by position (DORSAL, NOMBRE, CATEGORIA)
+    if (header.length >= 2) {
+      colMap.dorsal = 0;
+      colMap.nombre = 1;
+      if (header.length >= 3) colMap.categoria = 2;
+    }
+  }
+
+  const participants = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/^['"]|['"]$/g, ''));
+    
+    const p = {};
+    if (colMap.dorsal !== undefined) p.dorsal = parseInt(cols[colMap.dorsal]);
+    if (colMap.nombre !== undefined) p.nombre = cols[colMap.nombre] || '';
+    if (colMap.categoria !== undefined) p.categoria = cols[colMap.categoria] || '';
+    if (colMap.telefono !== undefined) p.telefono = cols[colMap.telefono] || '';
+    if (colMap.email !== undefined) p.email = cols[colMap.email] || '';
+    if (colMap.talla !== undefined) p.talla = cols[colMap.talla] || '';
+
+    if (p.dorsal && p.nombre) {
+      participants.push(p);
+    }
+  }
+
+  return participants;
+}
+
+// Reset check-ins
+const btnResetCheckins = document.getElementById('btn-reset-checkins');
+if (btnResetCheckins) {
+  btnResetCheckins.addEventListener('click', async () => {
+    const confirmed = confirm('⚠️ ¿Estás seguro? Esto va a borrar TODOS los registros de check-in. Los participantes se mantienen.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch('/api/reset', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert('✅ ' + data.message);
+      } else {
+        alert('❌ Error: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Error de conexión');
+    }
+  });
+}

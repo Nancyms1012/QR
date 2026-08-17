@@ -19,6 +19,7 @@
       <button class="nav-btn" data-view="stats">📊 Stats</button>
       <button class="nav-btn" data-view="qrcodes">🏷️ QR Codes</button>
       <button class="nav-btn" data-view="send">📤 Enviar QR</button>
+      <button class="nav-btn" data-view="admin">⚙️ Admin</button>
     </nav>
   </header>
 
@@ -98,6 +99,47 @@
 
       <div id="send-list" class="send-list"></div>
     </section>
+
+    <!-- ADMIN VIEW -->
+    <section id="view-admin" class="view">
+      <h2>⚙️ Administración</h2>
+
+      <div class="admin-card">
+        <h3>📂 Subir Listado de Participantes</h3>
+        <p class="hint">Subí un archivo CSV o Excel (.xlsx) con las columnas: DORSAL, NOMBRE, CATEGORIA, TELEFONO, EMAIL, TALLA</p>
+        
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin:1rem 0;">
+          <input type="file" id="file-upload" accept=".csv,.xlsx,.xls,.json" style="font-size:0.9rem;" />
+          <select id="upload-mode" style="padding:0.5rem;border:2px solid #e2e8f0;border-radius:8px;">
+            <option value="replace">Reemplazar todo</option>
+            <option value="merge">Fusionar (actualizar existentes + agregar nuevos)</option>
+          </select>
+        </div>
+        
+        <button id="btn-upload" class="btn btn-primary">📤 Subir Archivo</button>
+        <div id="upload-result" style="margin-top:1rem;"></div>
+      </div>
+
+      <div class="admin-card" style="margin-top:1rem;">
+        <h3>📋 Formato esperado del archivo</h3>
+        <p class="hint">El archivo CSV debe tener encabezados. Las columnas aceptadas son:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-top:0.5rem;">
+          <tr style="background:#f1f5f9;"><th style="padding:0.4rem;text-align:left;border:1px solid #e2e8f0;">Columna</th><th style="padding:0.4rem;text-align:left;border:1px solid #e2e8f0;">Requerida</th><th style="padding:0.4rem;text-align:left;border:1px solid #e2e8f0;">Ejemplo</th></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">DORSAL</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">✅ Sí</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">254</td></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">NOMBRE</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">✅ Sí</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Abraham Aguilera</td></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">CATEGORIA</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Opcional</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Máster B Masculino</td></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">TELEFONO</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Opcional</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">50688881234</td></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">EMAIL</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Opcional</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">correo@mail.com</td></tr>
+          <tr><td style="padding:0.4rem;border:1px solid #e2e8f0;">TALLA</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">Opcional</td><td style="padding:0.4rem;border:1px solid #e2e8f0;">M</td></tr>
+        </table>
+      </div>
+
+      <div class="admin-card" style="margin-top:1rem;">
+        <h3>🔄 Reiniciar Check-ins</h3>
+        <p class="hint">Esto borra todos los registros de check-in sin borrar los participantes.</p>
+        <button id="btn-reset-checkins" class="btn btn-danger">🗑️ Reiniciar todos los check-ins</button>
+      </div>
+    </section>
   </main>
     </section>
 
@@ -117,9 +159,23 @@
   <!-- EDIT CONTACT MODAL -->
   <div id="edit-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 style="text-align:center;margin-bottom:1rem;">✏️ Editar Datos de Contacto</h3>
+      <h3 style="text-align:center;margin-bottom:1rem;">✏️ Editar Participante</h3>
       <div id="edit-participant-info" style="text-align:center;margin-bottom:1rem;"></div>
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <label style="font-size:0.85rem;color:#64748b;">👤 Nombre</label>
+        <input type="text" id="edit-nombre" placeholder="Nombre completo" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+        <label style="font-size:0.85rem;color:#64748b;">🏷️ Categoría</label>
+        <input type="text" id="edit-categoria" placeholder="Ej: Máster A Masculino" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+        <label style="font-size:0.85rem;color:#64748b;">👕 Talla Jersey</label>
+        <select id="edit-talla" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
+          <option value="">-- Sin asignar --</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="XXL">XXL</option>
+        </select>
         <label style="font-size:0.85rem;color:#64748b;">📱 Teléfono (con código de país, ej: 50688881234)</label>
         <input type="tel" id="edit-telefono" placeholder="50688881234" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
         <label style="font-size:0.85rem;color:#64748b;">📧 Email</label>

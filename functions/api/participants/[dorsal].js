@@ -80,6 +80,7 @@ export async function onRequestPut(context) {
     if (body.email !== undefined) participantsRaw[index].email = body.email;
     if (body.nombre !== undefined) participantsRaw[index].nombre = body.nombre;
     if (body.categoria !== undefined) participantsRaw[index].categoria = body.categoria;
+    if (body.talla !== undefined) participantsRaw[index].talla = body.talla;
 
     // Save back to KV
     await env.CHECKIN_KV.put("participants", JSON.stringify(participantsRaw));
