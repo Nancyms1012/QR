@@ -1357,7 +1357,7 @@ async function loadKitList() {
       return `
         <div class="send-card" style="${cardStyle}">
           <div class="send-info">
-            <span class="dorsal">#${p.dorsal}</span>
+            <span class="dorsal" style="font-size:1.8rem;">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
             <div class="contacto">
               <span>🏷️ ${p.categoria || ''}</span>
