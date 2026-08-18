@@ -24,6 +24,13 @@ export async function onRequestGet(context) {
       });
     }
 
+    if (!Array.isArray(participantsRaw)) {
+      return new Response(JSON.stringify({ error: "Datos corruptos - no es un array", type: typeof participantsRaw }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
     // Merge with check-in status
     const participants = await Promise.all(
       participantsRaw.map(async (p) => {

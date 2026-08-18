@@ -1140,7 +1140,7 @@ function parseCSV(text) {
   });
 
   // Debug alert - remove after confirming it works
-  alert('Columnas: ' + JSON.stringify(header) + '\nMapeo: ' + JSON.stringify(colMap));
+  console.log('Columnas: ' + JSON.stringify(header) + ' Mapeo: ' + JSON.stringify(colMap));
 
   if (colMap.dorsal === undefined || colMap.nombre === undefined) {
     // Try to detect by position (DORSAL, NOMBRE, CATEGORIA)
