@@ -1304,7 +1304,7 @@ if (kitSearchInput) kitSearchInput.addEventListener('keyup', loadKitList);
 
 async function loadKitList() {
   try {
-    const res = await fetch('/api/participants');
+    const res = await fetch('/api/kit-pending');
     const participants = await res.json();
     if (!Array.isArray(participants)) {
       kitList.innerHTML = '<p style="color:red;">Error al cargar</p>';
@@ -1322,8 +1322,7 @@ async function loadKitList() {
       });
     }
 
-    // Filter: only checked-in but kit NOT delivered
-    let filtered = participants.filter(p => p.checkedIn && !p.kitRetirado);
+    let filtered = participants;
 
     // Apply competition filter
     if (kitFilterCompetition && kitFilterCompetition.value) {
@@ -1400,7 +1399,7 @@ if (completadosFilterCompetition) completadosFilterCompetition.addEventListener(
 
 async function loadCompletadosList() {
   try {
-    const res = await fetch('/api/participants');
+    const res = await fetch('/api/completados');
     const participants = await res.json();
     if (!Array.isArray(participants)) {
       completadosList.innerHTML = '<p style="color:red;">Error al cargar</p>';
@@ -1418,8 +1417,7 @@ async function loadCompletadosList() {
       });
     }
 
-    // Filter: both check-in AND kit delivered
-    let filtered = participants.filter(p => p.checkedIn && p.kitRetirado);
+    let filtered = participants;
 
     // Apply competition filter
     if (completadosFilterCompetition && completadosFilterCompetition.value) {
