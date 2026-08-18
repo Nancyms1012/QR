@@ -214,18 +214,34 @@ h2 {
 }
 
 .participant-info .nombre {
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   margin: 0.2rem 0;
 }
 
 .participant-info .categoria {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-light);
   background: var(--bg);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   display: inline-block;
+}
+
+.participant-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.participant-details span {
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  font-weight: 500;
 }
 
 .participant-status { font-size: 1.5rem; }

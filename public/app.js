@@ -507,9 +507,12 @@ function createParticipantCard(p) {
       <div class="participant-info">
         <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${getDisplayName(p)}</div>
-        <span class="categoria">${p.categoria || ''}</span>
-        ${p.competencia ? `<span class="categoria" style="margin-left:0.3rem;">🏅 ${p.competencia}</span>` : ''}
-        ${p.talla ? `<span class="categoria" style="margin-left:0.3rem;">👕 ${p.talla}</span>` : ''}
+        <div class="participant-details">
+          ${p.categoria ? `<span>🏷️ ${p.categoria}</span>` : ''}
+          ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
+          ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
+          ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+        </div>
       </div>
       <div class="participant-status">${statusIcon}</div>
     </div>
