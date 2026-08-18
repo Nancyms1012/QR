@@ -407,7 +407,11 @@ const filterCategory = document.getElementById('filter-category');
 const filterStatus = document.getElementById('filter-status');
 const participantsList = document.getElementById('participants-list');
 
-filterCompetition.addEventListener('change', loadParticipantsList);
+filterCompetition.addEventListener('change', () => {
+  // Reset category filter when competition changes
+  filterCategory.innerHTML = '<option value="">Todas las categorías</option>';
+  loadParticipantsList();
+});
 filterCategory.addEventListener('change', loadParticipantsList);
 filterStatus.addEventListener('change', loadParticipantsList);
 
@@ -430,10 +434,21 @@ async function loadParticipantsList() {
       return;
     }
 
-    let filtered = participants;
-    if (filterCompetition.value) {
-      filtered = filtered.filter(p => p.competencia === filterCompetition.value);
+    // Filter by selected competition first
+    const compFiltered = participants.filter(p => p.competencia === filterCompetition.value);
+
+    // Populate categories based on selected competition (only categories in this competition)
+    if (filterCategory.options.length <= 1) {
+      const categories = [...new Set(compFiltered.map(p => p.categoria).filter(Boolean))].sort();
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        filterCategory.appendChild(opt);
+      });
     }
+
+    let filtered = compFiltered;
     if (filterCategory.value) {
       filtered = filtered.filter(p => p.categoria === filterCategory.value);
     }
