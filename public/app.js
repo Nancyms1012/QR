@@ -1026,10 +1026,50 @@ async function bulkSendWhatsApp() {
 
 
 
-// ============ ADMIN - UPLOAD + RESET ============
+// ============ ADMIN - MODULES + UPLOAD + RESET ============
 function initAdmin() {
-  // Already initialized via event listeners below
+  loadModuleSettings();
 }
+
+// Module visibility
+const moduleScanner = document.getElementById('module-scanner');
+const moduleQrcodes = document.getElementById('module-qrcodes');
+const moduleSend = document.getElementById('module-send');
+
+function loadModuleSettings() {
+  const settings = JSON.parse(localStorage.getItem('xterra-modules') || '{"scanner":true,"qrcodes":true,"send":true}');
+  if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
+  if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
+  if (moduleSend) moduleSend.checked = settings.send !== false;
+  applyModuleVisibility(settings);
+}
+
+function applyModuleVisibility(settings) {
+  const scannerTab = document.querySelector('[data-view="scanner"]');
+  const qrcodesTab = document.querySelector('[data-view="qrcodes"]');
+  const sendTab = document.querySelector('[data-view="send"]');
+
+  if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
+  if (qrcodesTab) qrcodesTab.style.display = settings.qrcodes !== false ? '' : 'none';
+  if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
+}
+
+function saveModuleSettings() {
+  const settings = {
+    scanner: moduleScanner ? moduleScanner.checked : true,
+    qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
+    send: moduleSend ? moduleSend.checked : true
+  };
+  localStorage.setItem('xterra-modules', JSON.stringify(settings));
+  applyModuleVisibility(settings);
+}
+
+if (moduleScanner) moduleScanner.addEventListener('change', saveModuleSettings);
+if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
+if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
+
+// Load module settings on page load
+loadModuleSettings();
 
 // File upload
 const btnUpload = document.getElementById('btn-upload');

@@ -108,6 +108,22 @@
       <h2>⚙️ Administración</h2>
 
       <div class="admin-card">
+        <h3>🧩 Módulos activos</h3>
+        <p class="hint">Activá o desactivá funcionalidades según la competencia.</p>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
+            <input type="checkbox" id="module-scanner" style="width:18px;height:18px;cursor:pointer;"> 📷 Escáner QR
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
+            <input type="checkbox" id="module-qrcodes" style="width:18px;height:18px;cursor:pointer;"> 🏷️ QR Codes
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
+            <input type="checkbox" id="module-send" style="width:18px;height:18px;cursor:pointer;"> 📤 Enviar QR
+          </label>
+        </div>
+      </div>
+
+      <div class="admin-card">
         <h3>📂 Subir Listado de Participantes</h3>
         <p class="hint">Subí un archivo CSV o Excel (.xlsx) con las columnas: DORSAL, NOMBRE, CATEGORIA, TELEFONO, EMAIL, TALLA</p>
         
