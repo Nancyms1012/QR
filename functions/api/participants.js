@@ -12,37 +12,45 @@ export async function onRequestGet(context) {
       return Response.json({ error: "No hay datos", hint: "Sube un CSV desde Admin" }, { status: 404 });
     }
 
-    let participantsRaw;
+    let participants;
     try {
-      participantsRaw = JSON.parse(raw);
+      participants = JSON.parse(raw);
     } catch (e) {
-      return Response.json({ error: "JSON corrupto en KV", details: e.message, sample: raw.substring(0, 200) }, { status: 500 });
+      return Response.json({ error: "JSON corrupto en KV", details: e.message }, { status: 500 });
     }
 
-    if (!Array.isArray(participantsRaw)) {
-      return Response.json({ error: "Datos no son array", type: typeof participantsRaw }, { status: 500 });
+    if (!Array.isArray(participants)) {
+      return Response.json({ error: "Datos no son array" }, { status: 500 });
     }
 
-    // Merge with check-in status
-    const participants = [];
-    for (const p of participantsRaw) {
-      let checkin = null;
-      try {
-        checkin = await env.CHECKIN_KV.get(`checkin:${p.dorsal}`, { type: "json" });
-      } catch (e) {
-        // ignore check-in read errors
-      }
-      participants.push({
+    // Get all check-in data in one batch using KV list
+    const checkinData = {};
+    const list = await env.CHECKIN_KV.list({ prefix: "checkin:" });
+    
+    // Fetch check-in values (only if there are any)
+    if (list.keys.length > 0) {
+      const checkinPromises = list.keys.map(async (key) => {
+        const val = await env.CHECKIN_KV.get(key.name, { type: "json" });
+        const dorsal = key.name.replace("checkin:", "");
+        checkinData[dorsal] = val;
+      });
+      await Promise.all(checkinPromises);
+    }
+
+    // Merge participants with check-in status
+    const result = participants.map(p => {
+      const checkin = checkinData[String(p.dorsal)];
+      return {
         ...p,
         checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
         checkInTime: checkin ? checkin.checkInTime : null,
         kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,
         kitRetiroTime: checkin ? checkin.kitRetiroTime : null
-      });
-    }
+      };
+    });
 
-    return Response.json(participants);
+    return Response.json(result);
   } catch (err) {
-    return Response.json({ error: "Error fatal", message: err.message, stack: err.stack }, { status: 500 });
+    return Response.json({ error: "Error interno", details: err.message }, { status: 500 });
   }
 }
