@@ -411,29 +411,21 @@ filterStatus.addEventListener('change', loadParticipantsList);
 
 async function loadParticipantsList() {
   try {
+    // If no competition selected, just load the filter options
+    if (!filterCompetition.value) {
+      if (filterCompetition.options.length <= 1) {
+        await loadFilterOptions();
+      }
+      participantsList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">⬆️ Seleccioná una competencia para ver los participantes</p>';
+      return;
+    }
+
     const res = await fetch('/api/participants');
     const participants = await res.json();
 
-    // Populate competitions filter (once)
-    const competitions = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
-    if (filterCompetition.options.length <= 1) {
-      competitions.forEach(comp => {
-        const opt = document.createElement('option');
-        opt.value = comp;
-        opt.textContent = comp;
-        filterCompetition.appendChild(opt);
-      });
-    }
-
-    // Populate categories filter (once)
-    const categories = [...new Set(participants.map(p => p.categoria).filter(Boolean))].sort();
-    if (filterCategory.options.length <= 1) {
-      categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        filterCategory.appendChild(opt);
-      });
+    if (!Array.isArray(participants)) {
+      participantsList.innerHTML = '<p style="color:red;">Error al cargar datos</p>';
+      return;
     }
 
     let filtered = participants;
@@ -450,10 +442,38 @@ async function loadParticipantsList() {
     }
 
     filtered.sort((a, b) => a.dorsal - b.dorsal);
-    participantsList.innerHTML = filtered.map(p => createParticipantCard(p)).join('');
+    participantsList.innerHTML = filtered.length > 0
+      ? filtered.map(p => createParticipantCard(p)).join('')
+      : '<p style="color:#64748b;text-align:center;padding:2rem;">No se encontraron participantes</p>';
     attachCardListeners();
   } catch (err) {
     participantsList.innerHTML = '<p style="color:red;">Error al cargar lista</p>';
+  }
+}
+
+async function loadFilterOptions() {
+  try {
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) return;
+
+    const competitions = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+    competitions.forEach(comp => {
+      const opt = document.createElement('option');
+      opt.value = comp;
+      opt.textContent = comp;
+      filterCompetition.appendChild(opt);
+    });
+
+    const categories = [...new Set(participants.map(p => p.categoria).filter(Boolean))].sort();
+    categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      filterCategory.appendChild(opt);
+    });
+  } catch (e) {
+    // Silently fail - filters just won't populate
   }
 }
 
