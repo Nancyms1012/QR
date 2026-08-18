@@ -145,7 +145,7 @@ async function showCheckinModal(dorsal) {
       ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
       : '';
 
-    const bgColor = currentParticipant.color ? getColorStyle(currentParticipant.color) : '';
+    const bgColor = getColorForParticipant(currentParticipant);
     const modalColorStyle = bgColor ? `border-left: 6px solid ${bgColor}; background: ${bgColor}15; padding: 1rem; border-radius: 8px;` : '';
 
     modalBody.innerHTML = `
@@ -436,22 +436,36 @@ function getDisplayName(p) {
   return [p.nombre, p.apellidos].filter(Boolean).join(' ') || 'Sin nombre';
 }
 
+function getColorForParticipant(p) {
+  // If color is set directly in data, use it
+  if (p.color && p.color.trim()) return getColorStyle(p.color);
+  // Auto-assign color based on competition name
+  if (p.competencia) {
+    const comp = p.competencia.toLowerCase();
+    if (comp.includes('trail') && comp.includes('36')) return '#FF66CC';       // Rosado
+    if (comp.includes('trail') && comp.includes('24')) return '#6699FF';       // Azul
+    if (comp.includes('trail') && comp.includes('11')) return '#FFFF00';       // Amarillo
+    if (comp.includes('trail') && comp.includes('5')) return '#CCFF33';        // Verde
+    if (comp.includes('aguas')) return '#e2e8f0';                               // Blanco
+    if (comp.includes('triatl') || comp.includes('sprint') || comp.includes('full') || comp.includes('relevo')) return '#e2e8f0'; // Blanco
+  }
+  return '';
+}
+
 function getColorStyle(color) {
   if (!color) return '';
-  // If it's already a hex code, use directly
   if (color.startsWith('#')) return color;
-  // XTERRA competition color map
   const colorMap = {
     'blanco': '#e2e8f0',
     'amarillo': '#FFFF00',
     'verde': '#CCFF33',
     'azul': '#6699FF',
-    'rosado': '#FF66CC', 'rosa': '#FF66CC', 'pink': '#FF66CC',
-    'rojo': '#dc2626', 'red': '#dc2626',
-    'naranja': '#ea580c', 'orange': '#ea580c',
-    'morado': '#9333ea', 'purple': '#9333ea',
-    'negro': '#1e293b', 'black': '#1e293b',
-    'celeste': '#06b6d4', 'cyan': '#06b6d4'
+    'rosado': '#FF66CC', 'rosa': '#FF66CC',
+    'rojo': '#dc2626',
+    'naranja': '#ea580c',
+    'morado': '#9333ea',
+    'negro': '#1e293b',
+    'celeste': '#06b6d4'
   };
   return colorMap[color.toLowerCase()] || color;
 }
@@ -462,7 +476,7 @@ function createParticipantCard(p) {
   if (p.checkedIn && p.kitRetirado) statusIcon = '✅📦';
   else if (p.checkedIn) statusIcon = '✅';
   
-  const bgColor = p.color ? getColorStyle(p.color) : '';
+  const bgColor = getColorForParticipant(p);
   const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
 
   return `
