@@ -145,18 +145,18 @@ async function showCheckinModal(dorsal) {
       ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
       : '';
 
-    const colorStyle = currentParticipant.color ? `border-left: 6px solid ${getColorStyle(currentParticipant.color)};padding-left:1rem;` : '';
+    const bgColor = currentParticipant.color ? getColorStyle(currentParticipant.color) : '';
+    const modalColorStyle = bgColor ? `border-left: 6px solid ${bgColor}; background: ${bgColor}15; padding: 1rem; border-radius: 8px;` : '';
 
     modalBody.innerHTML = `
-      <div style="${colorStyle}">
+      <div style="${modalColorStyle}">
         <div class="dorsal-big">#${currentParticipant.dorsal}</div>
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">🏅 ${currentParticipant.competencia}</span></div>` : ''}
         ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
-        ${currentParticipant.color ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:${getColorStyle(currentParticipant.color)};color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">🎨 ${currentParticipant.color}</span></div>` : ''}
       </div>
-      <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;">
+      <div style="display:flex;flex-direction:column;gap:0.4rem;margin:1rem 0;">
         <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
           ${isChecked ? `✅ Registro: ${checkTime}` : '⏳ Registro: Pendiente'}
         </div>
@@ -300,7 +300,6 @@ btnEditContact.addEventListener('click', () => {
   document.getElementById('edit-categoria').value = currentParticipant.categoria || '';
   document.getElementById('edit-competencia').value = currentParticipant.competencia || '';
   document.getElementById('edit-talla').value = currentParticipant.talla || '';
-  document.getElementById('edit-color').value = currentParticipant.color || '#000000';
   editTelefono.value = currentParticipant.telefono || '';
   editEmail.value = currentParticipant.email || '';
   modal.classList.add('hidden');
@@ -329,7 +328,6 @@ btnSaveContact.addEventListener('click', async () => {
   const categoria = document.getElementById('edit-categoria').value.trim();
   const competencia = document.getElementById('edit-competencia').value.trim();
   const talla = document.getElementById('edit-talla').value.trim();
-  const color = document.getElementById('edit-color').value.trim();
   const telefono = editTelefono.value.trim();
   const email = editEmail.value.trim();
 
@@ -337,14 +335,14 @@ btnSaveContact.addEventListener('click', async () => {
     const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, color, telefono, email })
+      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, telefono, email })
     });
 
     const data = await res.json();
 
     if (res.ok) {
       alert(`✅ Datos actualizados`);
-      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, color, telefono, email });
+      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, telefono, email });
       editModal.classList.add('hidden');
       showCheckinModal(currentParticipant.dorsal);
     } else {
@@ -444,18 +442,18 @@ function getColorStyle(color) {
   if (color.startsWith('#')) return color;
   // Fallback text-to-color map
   const colorMap = {
+    'rosado': '#FF66CC', 'rosa': '#FF66CC', 'pink': '#FF66CC',
+    'amarillo': '#FFFF00', 'yellow': '#FFFF00',
+    'verde': '#CCFF33', 'green': '#CCFF33',
+    'azul': '#6699FF', 'blue': '#6699FF',
     'rojo': '#dc2626', 'red': '#dc2626',
-    'azul': '#2563eb', 'blue': '#2563eb',
-    'verde': '#16a34a', 'green': '#16a34a',
-    'amarillo': '#eab308', 'yellow': '#eab308',
     'naranja': '#ea580c', 'orange': '#ea580c',
     'morado': '#9333ea', 'purple': '#9333ea',
-    'rosado': '#ec4899', 'pink': '#ec4899',
     'negro': '#1e293b', 'black': '#1e293b',
-    'blanco': '#64748b', 'white': '#64748b',
+    'blanco': '#ffffff', 'white': '#ffffff',
     'celeste': '#06b6d4', 'cyan': '#06b6d4'
   };
-  return colorMap[color.toLowerCase()] || '#6b7280';
+  return colorMap[color.toLowerCase()] || color;
 }
 
 function createParticipantCard(p) {
@@ -464,12 +462,13 @@ function createParticipantCard(p) {
   if (p.checkedIn && p.kitRetirado) statusIcon = '✅📦';
   else if (p.checkedIn) statusIcon = '✅';
   
-  const colorDot = p.color ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${getColorStyle(p.color)};margin-right:0.3rem;vertical-align:middle;" title="${p.color}"></span>` : '';
+  const bgColor = p.color ? getColorStyle(p.color) : '';
+  const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
 
   return `
-    <div class="participant-card ${statusClass}" data-dorsal="${p.dorsal}">
+    <div class="participant-card ${statusClass}" data-dorsal="${p.dorsal}" style="${cardStyle}">
       <div class="participant-info">
-        <span class="dorsal">${colorDot}#${p.dorsal}</span>
+        <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${getDisplayName(p)}</div>
         <span class="categoria">${p.categoria || ''}</span>
         ${p.competencia ? `<span class="categoria" style="margin-left:0.3rem;">🏅 ${p.competencia}</span>` : ''}
