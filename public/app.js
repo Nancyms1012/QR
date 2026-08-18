@@ -1057,12 +1057,16 @@ function initAdmin() {
 const moduleScanner = document.getElementById('module-scanner');
 const moduleQrcodes = document.getElementById('module-qrcodes');
 const moduleSend = document.getElementById('module-send');
+const moduleKit = document.getElementById('module-kit');
+const moduleCompletados = document.getElementById('module-completados');
 
 function loadModuleSettings() {
-  const settings = JSON.parse(localStorage.getItem('xterra-modules') || '{"scanner":true,"qrcodes":true,"send":true}');
+  const settings = JSON.parse(localStorage.getItem('xterra-modules') || '{"scanner":true,"qrcodes":true,"send":true,"kit":true,"completados":true}');
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
   if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
   if (moduleSend) moduleSend.checked = settings.send !== false;
+  if (moduleKit) moduleKit.checked = settings.kit !== false;
+  if (moduleCompletados) moduleCompletados.checked = settings.completados !== false;
   applyModuleVisibility(settings);
 }
 
@@ -1070,17 +1074,23 @@ function applyModuleVisibility(settings) {
   const scannerTab = document.querySelector('[data-view="scanner"]');
   const qrcodesTab = document.querySelector('[data-view="qrcodes"]');
   const sendTab = document.querySelector('[data-view="send"]');
+  const kitTab = document.querySelector('[data-view="kit"]');
+  const completadosTab = document.querySelector('[data-view="completados"]');
 
   if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
   if (qrcodesTab) qrcodesTab.style.display = settings.qrcodes !== false ? '' : 'none';
   if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
+  if (kitTab) kitTab.style.display = settings.kit !== false ? '' : 'none';
+  if (completadosTab) completadosTab.style.display = settings.completados !== false ? '' : 'none';
 }
 
 function saveModuleSettings() {
   const settings = {
     scanner: moduleScanner ? moduleScanner.checked : true,
     qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
-    send: moduleSend ? moduleSend.checked : true
+    send: moduleSend ? moduleSend.checked : true,
+    kit: moduleKit ? moduleKit.checked : true,
+    completados: moduleCompletados ? moduleCompletados.checked : true
   };
   localStorage.setItem('xterra-modules', JSON.stringify(settings));
   applyModuleVisibility(settings);
@@ -1089,6 +1099,8 @@ function saveModuleSettings() {
 if (moduleScanner) moduleScanner.addEventListener('change', saveModuleSettings);
 if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
 if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
+if (moduleKit) moduleKit.addEventListener('change', saveModuleSettings);
+if (moduleCompletados) moduleCompletados.addEventListener('change', saveModuleSettings);
 
 // Load module settings on page load
 loadModuleSettings();
