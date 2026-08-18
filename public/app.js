@@ -1114,32 +1114,33 @@ async function handleFileUpload() {
 }
 
 function parseCSV(text) {
+  // Remove BOM character if present (anywhere in the text)
+  text = text.replace(/\uFEFF/g, '').replace(/\xEF\xBB\xBF/g, '');
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
 
-  // Parse header - normalize column names, remove BOM
-  const rawHeaderLine = lines[0].replace(/^\uFEFF/, ''); // Remove BOM
-  const header = rawHeaderLine.split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, ''));
+  // Parse header - normalize column names, remove BOM and any non-printable chars
+  const rawHeaderLine = lines[0].replace(/^[^\x20-\x7E]+/, '').replace(/[\uFEFF\xEF\xBB\xBF]/g, '');
+  const header = rawHeaderLine.split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, '').replace(/[^\x20-\x7E]/g, ''));
 
-  // Map common column name variations
+  // Map column names - use exact matches to avoid ambiguity
   const colMap = {};
   header.forEach((h, i) => {
-    if (!h) return; // Skip empty headers
-    if (h.includes('DORSAL') || h === 'NUM' || h === 'NUMERO' || h === 'BIB' || h === 'NÚMERO' || h === 'N°' || h === 'NO') colMap.dorsal = i;
-    else if (h === 'NOMBRE' || h === 'NAME' || h.includes('NOMBRE_BD') || h === 'FIRST_NAME') colMap.nombre = i;
+    if (!h) return;
+    if (h === 'NUMERO' || h === 'NMERO' || h === 'DORSAL' || h === 'NUM' || h === 'BIB' || h === 'NO') colMap.dorsal = i;
+    else if (h === 'NOMBRE' || h === 'NAME' || h === 'NOMBRE_BD' || h === 'FIRST_NAME') colMap.nombre = i;
     else if (h === 'APELLIDOS' || h === 'APELLIDO' || h === 'LAST_NAME' || h === 'LASTNAME') colMap.apellidos = i;
-    else if (h === 'GENERO' || h === 'GÉNERO' || h === 'SEXO' || h === 'GENDER' || h === 'GEN') colMap.genero = i;
-    else if (h === 'CATEGORIA' || h === 'CATEGORÍA' || h.includes('CATEG') || h.includes('NUEVA_CATEGORIA')) colMap.categoria = i;
+    else if (h === 'GENERO' || h === 'GNERO' || h === 'SEXO' || h === 'GENDER' || h === 'GEN') colMap.genero = i;
+    else if (h === 'CATEGORIA' || h === 'CATEGORA' || h === 'NUEVA_CATEGORIA') colMap.categoria = i;
     else if (h === 'COMPETENCIA' || h === 'COMPETITION' || h === 'EVENTO' || h === 'EVENT' || h === 'PRUEBA') colMap.competencia = i;
-    else if (h.includes('TEL') || h.includes('PHONE') || h.includes('CEL')) colMap.telefono = i;
-    else if (h.includes('EMAIL') || h.includes('CORREO') || h.includes('MAIL')) colMap.email = i;
-    else if (h === 'TALLA' || h.includes('SIZE') || h === 'JERSEY') colMap.talla = i;
+    else if (h === 'TELEFONO' || h === 'TELFONO' || h === 'CELULAR' || h === 'PHONE' || h === 'CEL') colMap.telefono = i;
+    else if (h === 'EMAIL' || h === 'CORREO' || h === 'MAIL') colMap.email = i;
+    else if (h === 'TALLA' || h === 'SIZE' || h === 'JERSEY') colMap.talla = i;
     else if (h === 'COLOR' || h === 'COLOR_DORSAL') colMap.color = i;
   });
 
-  // Debug: log what was detected
-  console.log('CSV Headers:', header);
-  console.log('Column mapping:', colMap);
+  // Debug alert - remove after confirming it works
+  alert('Columnas: ' + JSON.stringify(header) + '\nMapeo: ' + JSON.stringify(colMap));
 
   if (colMap.dorsal === undefined || colMap.nombre === undefined) {
     // Try to detect by position (DORSAL, NOMBRE, CATEGORIA)
