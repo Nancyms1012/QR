@@ -1,57 +1,48 @@
 // GET /api/participants - List all participants with their check-in status
 export async function onRequestGet(context) {
-  const { env } = context;
-
   try {
-    // Check if KV binding exists
+    const { env } = context;
+
     if (!env.CHECKIN_KV) {
-      return new Response(JSON.stringify({ 
-        error: "KV no vinculado", 
-        details: "CHECKIN_KV binding no está configurado. Ve a Settings > Bindings en Cloudflare Pages.",
-        availableBindings: Object.keys(env)
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "KV no vinculado" }, { status: 500 });
     }
 
-    // Get base participants data
-    const participantsRaw = await env.CHECKIN_KV.get("participants", { type: "json" });
-    if (!participantsRaw) {
-      return new Response(JSON.stringify({ error: "No hay datos de participantes" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+    const raw = await env.CHECKIN_KV.get("participants");
+    if (!raw) {
+      return Response.json({ error: "No hay datos", hint: "Sube un CSV desde Admin" }, { status: 404 });
+    }
+
+    let participantsRaw;
+    try {
+      participantsRaw = JSON.parse(raw);
+    } catch (e) {
+      return Response.json({ error: "JSON corrupto en KV", details: e.message, sample: raw.substring(0, 200) }, { status: 500 });
     }
 
     if (!Array.isArray(participantsRaw)) {
-      return new Response(JSON.stringify({ error: "Datos corruptos - no es un array", type: typeof participantsRaw }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "Datos no son array", type: typeof participantsRaw }, { status: 500 });
     }
 
     // Merge with check-in status
-    const participants = await Promise.all(
-      participantsRaw.map(async (p) => {
-        const checkin = await env.CHECKIN_KV.get(`checkin:${p.dorsal}`, { type: "json" });
-        return {
-          ...p,
-          checkedIn: checkin ? checkin.checkedIn : false,
-          checkInTime: checkin ? checkin.checkInTime : null,
-          kitRetirado: checkin ? checkin.kitRetirado : false,
-          kitRetiroTime: checkin ? checkin.kitRetiroTime : null
-        };
-      })
-    );
+    const participants = [];
+    for (const p of participantsRaw) {
+      let checkin = null;
+      try {
+        checkin = await env.CHECKIN_KV.get(`checkin:${p.dorsal}`, { type: "json" });
+      } catch (e) {
+        // ignore check-in read errors
+      }
+      participants.push({
+        ...p,
+        checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
+        checkInTime: checkin ? checkin.checkInTime : null,
+        kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,
+        kitRetiroTime: checkin ? checkin.kitRetiroTime : null
+      });
+    }
 
-    return new Response(JSON.stringify(participants), {
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json(participants);
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Error interno", details: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json({ error: "Error fatal", message: err.message, stack: err.stack }, { status: 500 });
   }
 }
