@@ -372,11 +372,17 @@ async function performSearch() {
     const res = await fetch('/api/participants');
     const participants = await res.json();
 
-    const filtered = participants.filter(p =>
-      p.dorsal.toString().includes(query) ||
-      (p.nombre || '').toLowerCase().includes(query) ||
-      (p.apellidos || '').toLowerCase().includes(query)
-    );
+    const filtered = participants.filter(p => {
+      const dorsalStr = p.dorsal.toString();
+      const nombre = (p.nombre || '').toLowerCase();
+      const apellidos = (p.apellidos || '').toLowerCase();
+      // If query looks like a number, match from start of dorsal
+      if (/^\d+$/.test(query)) {
+        return dorsalStr.startsWith(query);
+      }
+      // Otherwise search by name/apellidos
+      return nombre.includes(query) || apellidos.includes(query) || dorsalStr.startsWith(query);
+    });
 
     if (filtered.length === 0) {
       searchResults.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No se encontraron resultados</p>';
