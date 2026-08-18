@@ -49,6 +49,14 @@ export async function onRequestPost(context) {
       await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(pendingList));
 
     } else if (stage === "kit") {
+      if (!existing.checkedIn) {
+        return Response.json({
+          error: "Registro pendiente",
+          message: `${participant.nombre} ${participant.apellidos || ''} debe hacer check-in de registro primero`,
+          participant: { ...participant, ...existing }
+        }, { status: 400 });
+      }
+
       if (existing.kitRetirado) {
         return Response.json({
           error: "Kit ya retirado",

@@ -181,10 +181,11 @@ async function showCheckinModal(dorsal) {
       btnConfirmCheckin.classList.remove('hidden');
     }
 
-    if (isKit) {
-      btnConfirmKit.classList.add('hidden');
-    } else {
+    // Kit button only available if registro is done
+    if (isChecked && !isKit) {
       btnConfirmKit.classList.remove('hidden');
+    } else {
+      btnConfirmKit.classList.add('hidden');
     }
 
     if (isChecked || isKit) {
