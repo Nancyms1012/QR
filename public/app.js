@@ -391,10 +391,12 @@ async function performSearch() {
 }
 
 // ============ PARTICIPANTS LIST ============
+const filterCompetition = document.getElementById('filter-competition');
 const filterCategory = document.getElementById('filter-category');
 const filterStatus = document.getElementById('filter-status');
 const participantsList = document.getElementById('participants-list');
 
+filterCompetition.addEventListener('change', loadParticipantsList);
 filterCategory.addEventListener('change', loadParticipantsList);
 filterStatus.addEventListener('change', loadParticipantsList);
 
@@ -403,8 +405,19 @@ async function loadParticipantsList() {
     const res = await fetch('/api/participants');
     const participants = await res.json();
 
+    // Populate competitions filter (once)
+    const competitions = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+    if (filterCompetition.options.length <= 1) {
+      competitions.forEach(comp => {
+        const opt = document.createElement('option');
+        opt.value = comp;
+        opt.textContent = comp;
+        filterCompetition.appendChild(opt);
+      });
+    }
+
     // Populate categories filter (once)
-    const categories = [...new Set(participants.map(p => p.categoria))].sort();
+    const categories = [...new Set(participants.map(p => p.categoria).filter(Boolean))].sort();
     if (filterCategory.options.length <= 1) {
       categories.forEach(cat => {
         const opt = document.createElement('option');
@@ -415,6 +428,9 @@ async function loadParticipantsList() {
     }
 
     let filtered = participants;
+    if (filterCompetition.value) {
+      filtered = filtered.filter(p => p.competencia === filterCompetition.value);
+    }
     if (filterCategory.value) {
       filtered = filtered.filter(p => p.categoria === filterCategory.value);
     }
@@ -445,7 +461,8 @@ function getColorForParticipant(p) {
     if (comp.includes('trail') && comp.includes('36')) return '#FF66CC';       // Rosado
     if (comp.includes('trail') && comp.includes('24')) return '#6699FF';       // Azul
     if (comp.includes('trail') && comp.includes('11')) return '#FFFF00';       // Amarillo
-    if (comp.includes('trail') && comp.includes('5')) return '#CCFF33';        // Verde
+    if (comp.includes('trail') && comp.includes('5.5')) return '#CCFF33';      // Verde
+    if (comp.includes('trail') && comp.includes('5 ')) return '#CCFF33';       // Verde (5 km)
     if (comp.includes('aguas')) return '#e2e8f0';                               // Blanco
     if (comp.includes('triatl') || comp.includes('sprint') || comp.includes('full') || comp.includes('relevo')) return '#e2e8f0'; // Blanco
   }
@@ -1027,8 +1044,15 @@ async function handleFileUpload() {
       const text = await file.text();
       participants = JSON.parse(text);
     } else if (file.name.endsWith('.csv')) {
-      // CSV file
-      const text = await file.text();
+      // CSV file - try UTF-8 first, then Latin-1
+      let text = await file.text();
+      // Check for encoding issues (replacement chars)
+      if (text.includes('�') || text.includes('Ã')) {
+        // Try reading as Latin-1
+        const buffer = await file.arrayBuffer();
+        const decoder = new TextDecoder('latin1');
+        text = decoder.decode(buffer);
+      }
       participants = parseCSV(text);
     } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
       // Excel - parse as CSV (basic support)
