@@ -376,12 +376,12 @@ async function performSearch() {
       const dorsalStr = p.dorsal.toString();
       const nombre = (p.nombre || '').toLowerCase();
       const apellidos = (p.apellidos || '').toLowerCase();
-      // If query looks like a number, match from start of dorsal
+      // If query looks like a number, match exact dorsal
       if (/^\d+$/.test(query)) {
-        return dorsalStr.startsWith(query);
+        return dorsalStr === query;
       }
       // Otherwise search by name/apellidos
-      return nombre.includes(query) || apellidos.includes(query) || dorsalStr.startsWith(query);
+      return nombre.includes(query) || apellidos.includes(query);
     });
 
     if (filtered.length === 0) {
