@@ -208,8 +208,8 @@ h2 {
 .participant-info { flex: 1; }
 
 .participant-info .dorsal {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: var(--primary);
 }
 
