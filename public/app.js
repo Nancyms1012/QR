@@ -38,8 +38,11 @@ if (btnRefresh) {
   });
 }
 
-// Auto-refresh every 30 seconds
+// Auto-refresh every 30 seconds (only when toggle is ON)
+const toggleAutorefresh = document.getElementById('toggle-autorefresh');
+
 setInterval(() => {
+  if (!toggleAutorefresh || !toggleAutorefresh.checked) return;
   // Only auto-refresh if modal is not open
   const modalOpen = !document.getElementById('checkin-modal').classList.contains('hidden') ||
                     !document.getElementById('edit-modal').classList.contains('hidden');
