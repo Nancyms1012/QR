@@ -440,17 +440,17 @@ function getColorStyle(color) {
   if (!color) return '';
   // If it's already a hex code, use directly
   if (color.startsWith('#')) return color;
-  // Fallback text-to-color map
+  // XTERRA competition color map
   const colorMap = {
+    'blanco': '#e2e8f0',
+    'amarillo': '#FFFF00',
+    'verde': '#CCFF33',
+    'azul': '#6699FF',
     'rosado': '#FF66CC', 'rosa': '#FF66CC', 'pink': '#FF66CC',
-    'amarillo': '#FFFF00', 'yellow': '#FFFF00',
-    'verde': '#CCFF33', 'green': '#CCFF33',
-    'azul': '#6699FF', 'blue': '#6699FF',
     'rojo': '#dc2626', 'red': '#dc2626',
     'naranja': '#ea580c', 'orange': '#ea580c',
     'morado': '#9333ea', 'purple': '#9333ea',
     'negro': '#1e293b', 'black': '#1e293b',
-    'blanco': '#ffffff', 'white': '#ffffff',
     'celeste': '#06b6d4', 'cyan': '#06b6d4'
   };
   return colorMap[color.toLowerCase()] || color;
