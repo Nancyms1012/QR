@@ -145,11 +145,17 @@ async function showCheckinModal(dorsal) {
       ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
       : '';
 
+    const colorStyle = currentParticipant.color ? `border-left: 6px solid ${getColorStyle(currentParticipant.color)};padding-left:1rem;` : '';
+
     modalBody.innerHTML = `
-      <div class="dorsal-big">#${currentParticipant.dorsal}</div>
-      <div class="nombre-big">${currentParticipant.nombre}</div>
-      <div class="categoria-big">${currentParticipant.categoria}</div>
-      ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
+      <div style="${colorStyle}">
+        <div class="dorsal-big">#${currentParticipant.dorsal}</div>
+        <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
+        <div class="categoria-big">${currentParticipant.categoria || ''}</div>
+        ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">🏅 ${currentParticipant.competencia}</span></div>` : ''}
+        ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
+        ${currentParticipant.color ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:${getColorStyle(currentParticipant.color)};color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">🎨 ${currentParticipant.color}</span></div>` : ''}
+      </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;">
         <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
           ${isChecked ? `✅ Registro: ${checkTime}` : '⏳ Registro: Pendiente'}
@@ -286,11 +292,15 @@ const btnCancelEdit = document.getElementById('btn-cancel-edit');
 btnEditContact.addEventListener('click', () => {
   if (!currentParticipant) return;
   document.getElementById('edit-participant-info').innerHTML = `
-    <strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}
+    <strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre || ''} ${currentParticipant.apellidos || ''}
   `;
   document.getElementById('edit-nombre').value = currentParticipant.nombre || '';
+  document.getElementById('edit-apellidos').value = currentParticipant.apellidos || '';
+  document.getElementById('edit-genero').value = currentParticipant.genero || '';
   document.getElementById('edit-categoria').value = currentParticipant.categoria || '';
+  document.getElementById('edit-competencia').value = currentParticipant.competencia || '';
   document.getElementById('edit-talla').value = currentParticipant.talla || '';
+  document.getElementById('edit-color').value = currentParticipant.color || '#000000';
   editTelefono.value = currentParticipant.telefono || '';
   editEmail.value = currentParticipant.email || '';
   modal.classList.add('hidden');
@@ -314,8 +324,12 @@ btnSaveContact.addEventListener('click', async () => {
   if (!currentParticipant) return;
 
   const nombre = document.getElementById('edit-nombre').value.trim();
+  const apellidos = document.getElementById('edit-apellidos').value.trim();
+  const genero = document.getElementById('edit-genero').value.trim();
   const categoria = document.getElementById('edit-categoria').value.trim();
+  const competencia = document.getElementById('edit-competencia').value.trim();
   const talla = document.getElementById('edit-talla').value.trim();
+  const color = document.getElementById('edit-color').value.trim();
   const telefono = editTelefono.value.trim();
   const email = editEmail.value.trim();
 
@@ -323,18 +337,14 @@ btnSaveContact.addEventListener('click', async () => {
     const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, categoria, talla, telefono, email })
+      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, color, telefono, email })
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert(`✅ Datos actualizados para ${nombre || currentParticipant.nombre}`);
-      currentParticipant.nombre = nombre;
-      currentParticipant.categoria = categoria;
-      currentParticipant.talla = talla;
-      currentParticipant.telefono = telefono;
-      currentParticipant.email = email;
+      alert(`✅ Datos actualizados`);
+      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, color, telefono, email });
       editModal.classList.add('hidden');
       showCheckinModal(currentParticipant.dorsal);
     } else {
@@ -366,7 +376,8 @@ async function performSearch() {
 
     const filtered = participants.filter(p =>
       p.dorsal.toString().includes(query) ||
-      p.nombre.toLowerCase().includes(query)
+      (p.nombre || '').toLowerCase().includes(query) ||
+      (p.apellidos || '').toLowerCase().includes(query)
     );
 
     if (filtered.length === 0) {
@@ -423,18 +434,45 @@ async function loadParticipantsList() {
   }
 }
 
+function getDisplayName(p) {
+  return [p.nombre, p.apellidos].filter(Boolean).join(' ') || 'Sin nombre';
+}
+
+function getColorStyle(color) {
+  if (!color) return '';
+  // If it's already a hex code, use directly
+  if (color.startsWith('#')) return color;
+  // Fallback text-to-color map
+  const colorMap = {
+    'rojo': '#dc2626', 'red': '#dc2626',
+    'azul': '#2563eb', 'blue': '#2563eb',
+    'verde': '#16a34a', 'green': '#16a34a',
+    'amarillo': '#eab308', 'yellow': '#eab308',
+    'naranja': '#ea580c', 'orange': '#ea580c',
+    'morado': '#9333ea', 'purple': '#9333ea',
+    'rosado': '#ec4899', 'pink': '#ec4899',
+    'negro': '#1e293b', 'black': '#1e293b',
+    'blanco': '#64748b', 'white': '#64748b',
+    'celeste': '#06b6d4', 'cyan': '#06b6d4'
+  };
+  return colorMap[color.toLowerCase()] || '#6b7280';
+}
+
 function createParticipantCard(p) {
   const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
   let statusIcon = '⏳';
   if (p.checkedIn && p.kitRetirado) statusIcon = '✅📦';
   else if (p.checkedIn) statusIcon = '✅';
   
+  const colorDot = p.color ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${getColorStyle(p.color)};margin-right:0.3rem;vertical-align:middle;" title="${p.color}"></span>` : '';
+
   return `
     <div class="participant-card ${statusClass}" data-dorsal="${p.dorsal}">
       <div class="participant-info">
-        <span class="dorsal">#${p.dorsal}</span>
-        <div class="nombre">${p.nombre}</div>
-        <span class="categoria">${p.categoria}</span>
+        <span class="dorsal">${colorDot}#${p.dorsal}</span>
+        <div class="nombre">${getDisplayName(p)}</div>
+        <span class="categoria">${p.categoria || ''}</span>
+        ${p.competencia ? `<span class="categoria" style="margin-left:0.3rem;">🏅 ${p.competencia}</span>` : ''}
         ${p.talla ? `<span class="categoria" style="margin-left:0.3rem;">👕 ${p.talla}</span>` : ''}
       </div>
       <div class="participant-status">${statusIcon}</div>
@@ -1039,12 +1077,16 @@ function parseCSV(text) {
   // Map common column name variations
   const colMap = {};
   header.forEach((h, i) => {
-    if (h.includes('DORSAL') || h === 'NUM' || h === 'NUMERO' || h === 'BIB') colMap.dorsal = i;
-    else if (h.includes('NOMBRE') || h === 'NAME' || h.includes('NOMBRE_BD')) colMap.nombre = i;
+    if (h.includes('DORSAL') || h === 'NUM' || h === 'NUMERO' || h === 'BIB' || h === 'NÚMERO') colMap.dorsal = i;
+    else if (h === 'NOMBRE' || h === 'NAME' || h.includes('NOMBRE_BD')) colMap.nombre = i;
+    else if (h === 'APELLIDOS' || h === 'APELLIDO' || h === 'LAST_NAME' || h === 'LASTNAME') colMap.apellidos = i;
+    else if (h === 'GENERO' || h === 'GÉNERO' || h === 'SEXO' || h === 'GENDER') colMap.genero = i;
     else if (h.includes('CATEG') || h.includes('CATEGORY') || h.includes('NUEVA_CATEGORIA')) colMap.categoria = i;
+    else if (h === 'COMPETENCIA' || h === 'COMPETITION' || h === 'EVENTO' || h === 'EVENT') colMap.competencia = i;
     else if (h.includes('TEL') || h.includes('PHONE') || h.includes('CEL')) colMap.telefono = i;
     else if (h.includes('EMAIL') || h.includes('CORREO') || h.includes('MAIL')) colMap.email = i;
     else if (h.includes('TALLA') || h.includes('SIZE') || h.includes('JERSEY')) colMap.talla = i;
+    else if (h === 'COLOR' || h === 'COLOR_DORSAL') colMap.color = i;
   });
 
   if (colMap.dorsal === undefined || colMap.nombre === undefined) {
@@ -1063,10 +1105,14 @@ function parseCSV(text) {
     const p = {};
     if (colMap.dorsal !== undefined) p.dorsal = parseInt(cols[colMap.dorsal]);
     if (colMap.nombre !== undefined) p.nombre = cols[colMap.nombre] || '';
+    if (colMap.apellidos !== undefined) p.apellidos = cols[colMap.apellidos] || '';
+    if (colMap.genero !== undefined) p.genero = cols[colMap.genero] || '';
     if (colMap.categoria !== undefined) p.categoria = cols[colMap.categoria] || '';
+    if (colMap.competencia !== undefined) p.competencia = cols[colMap.competencia] || '';
     if (colMap.telefono !== undefined) p.telefono = cols[colMap.telefono] || '';
     if (colMap.email !== undefined) p.email = cols[colMap.email] || '';
     if (colMap.talla !== undefined) p.talla = cols[colMap.talla] || '';
+    if (colMap.color !== undefined) p.color = cols[colMap.color] || '';
 
     if (p.dorsal && p.nombre) {
       participants.push(p);

@@ -81,8 +81,12 @@ export async function onRequestPut(context) {
     if (body.telefono !== undefined) participantsRaw[index].telefono = body.telefono;
     if (body.email !== undefined) participantsRaw[index].email = body.email;
     if (body.nombre !== undefined) participantsRaw[index].nombre = body.nombre;
+    if (body.apellidos !== undefined) participantsRaw[index].apellidos = body.apellidos;
+    if (body.genero !== undefined) participantsRaw[index].genero = body.genero;
     if (body.categoria !== undefined) participantsRaw[index].categoria = body.categoria;
+    if (body.competencia !== undefined) participantsRaw[index].competencia = body.competencia;
     if (body.talla !== undefined) participantsRaw[index].talla = body.talla;
+    if (body.color !== undefined) participantsRaw[index].color = body.color;
 
     // Save back to KV
     await env.CHECKIN_KV.put("participants", JSON.stringify(participantsRaw));

@@ -35,10 +35,14 @@ export async function onRequestPost(context) {
       valid.push({
         dorsal: parseInt(p.dorsal),
         nombre: String(p.nombre || '').trim(),
+        apellidos: String(p.apellidos || '').trim(),
+        genero: String(p.genero || '').trim(),
         categoria: String(p.categoria || '').trim(),
+        competencia: String(p.competencia || '').trim(),
+        talla: String(p.talla || '').trim(),
+        color: String(p.color || '').trim(),
         telefono: String(p.telefono || '').trim(),
-        email: String(p.email || '').trim(),
-        talla: String(p.talla || '').trim()
+        email: String(p.email || '').trim()
       });
     }
 
@@ -61,10 +65,14 @@ export async function onRequestPost(context) {
         if (idx >= 0) {
           // Update existing - only overwrite non-empty fields
           if (newP.nombre) existing[idx].nombre = newP.nombre;
+          if (newP.apellidos) existing[idx].apellidos = newP.apellidos;
+          if (newP.genero) existing[idx].genero = newP.genero;
           if (newP.categoria) existing[idx].categoria = newP.categoria;
+          if (newP.competencia) existing[idx].competencia = newP.competencia;
+          if (newP.talla) existing[idx].talla = newP.talla;
+          if (newP.color) existing[idx].color = newP.color;
           if (newP.telefono) existing[idx].telefono = newP.telefono;
           if (newP.email) existing[idx].email = newP.email;
-          if (newP.talla) existing[idx].talla = newP.talla;
         } else {
           existing.push(newP);
         }
