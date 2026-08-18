@@ -1,10 +1,12 @@
 // ============ NAVIGATION ============
 const navButtons = document.querySelectorAll('.nav-btn');
 const views = document.querySelectorAll('.view');
+let currentView = 'scanner';
 
 navButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const viewId = btn.dataset.view;
+    currentView = viewId;
     navButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     views.forEach(v => v.classList.remove('active'));
@@ -17,6 +19,34 @@ navButtons.forEach(btn => {
     if (viewId === 'admin') initAdmin();
   });
 });
+
+// ============ AUTO-REFRESH (every 10 seconds) ============
+const btnRefresh = document.getElementById('btn-refresh');
+
+function refreshCurrentView() {
+  if (currentView === 'list') loadParticipantsList();
+  else if (currentView === 'stats') loadStats();
+  else if (currentView === 'send') loadSendList();
+}
+
+// Manual refresh button
+if (btnRefresh) {
+  btnRefresh.addEventListener('click', () => {
+    refreshCurrentView();
+    btnRefresh.textContent = '✅ Actualizado';
+    setTimeout(() => { btnRefresh.textContent = '🔄 Actualizar'; }, 1500);
+  });
+}
+
+// Auto-refresh every 10 seconds
+setInterval(() => {
+  // Only auto-refresh if modal is not open
+  const modalOpen = !document.getElementById('checkin-modal').classList.contains('hidden') ||
+                    !document.getElementById('edit-modal').classList.contains('hidden');
+  if (!modalOpen) {
+    refreshCurrentView();
+  }
+}, 10000);
 
 // ============ QR SCANNER ============
 let html5QrCode = null;
