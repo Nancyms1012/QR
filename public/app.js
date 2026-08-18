@@ -38,7 +38,7 @@ if (btnRefresh) {
   });
 }
 
-// Auto-refresh every 10 seconds
+// Auto-refresh every 30 seconds
 setInterval(() => {
   // Only auto-refresh if modal is not open
   const modalOpen = !document.getElementById('checkin-modal').classList.contains('hidden') ||
@@ -46,7 +46,7 @@ setInterval(() => {
   if (!modalOpen) {
     refreshCurrentView();
   }
-}, 10000);
+}, 30000);
 
 // ============ QR SCANNER ============
 let html5QrCode = null;
