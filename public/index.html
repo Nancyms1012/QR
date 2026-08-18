@@ -17,6 +17,8 @@
       <button class="nav-btn" data-view="manual">🔍 Buscar</button>
       <button class="nav-btn" data-view="list">📋 Lista</button>
       <button class="nav-btn" data-view="stats">📊 Stats</button>
+      <button class="nav-btn" data-view="kit">📦 Entrega Kit</button>
+      <button class="nav-btn" data-view="completados">✅ Completados</button>
       <button class="nav-btn" data-view="qrcodes">🏷️ QR Codes</button>
       <button class="nav-btn" data-view="send">📤 Enviar QR</button>
       <button class="nav-btn" data-view="admin">⚙️ Admin</button>
@@ -70,6 +72,34 @@
     <section id="view-stats" class="view">
       <h2>Estadísticas de Check-in</h2>
       <div id="stats-container"></div>
+    </section>
+
+    <!-- KIT DELIVERY VIEW -->
+    <section id="view-kit" class="view">
+      <h2>📦 Entrega de Kit</h2>
+      <p class="hint">Participantes que ya hicieron check-in y están pendientes de retirar su kit.</p>
+      <div class="filters">
+        <select id="kit-filter-competition">
+          <option value="">Todas las competencias</option>
+        </select>
+      </div>
+      <div class="search-box">
+        <input type="text" id="kit-search-input" placeholder="🔍 Buscar por dorsal o nombre..." autocomplete="off">
+      </div>
+      <div id="kit-list" class="send-list"></div>
+    </section>
+
+    <!-- COMPLETADOS VIEW -->
+    <section id="view-completados" class="view">
+      <h2>✅ Completados</h2>
+      <p class="hint">Participantes que completaron registro + retiro de kit.</p>
+      <div class="filters">
+        <select id="completados-filter-competition">
+          <option value="">Todas las competencias</option>
+        </select>
+      </div>
+      <div id="completados-count" style="margin-bottom:0.75rem;font-size:0.95rem;font-weight:600;color:var(--success);"></div>
+      <div id="completados-list" class="send-list"></div>
     </section>
 
     <!-- QR CODES VIEW -->

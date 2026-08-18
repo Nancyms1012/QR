@@ -16,6 +16,8 @@ navButtons.forEach(btn => {
     if (viewId === 'stats') loadStats();
     if (viewId === 'qrcodes') loadQRCodes();
     if (viewId === 'send') loadSendList();
+    if (viewId === 'kit') loadKitList();
+    if (viewId === 'completados') loadCompletadosList();
     if (viewId === 'admin') initAdmin();
   });
 });
@@ -1259,4 +1261,173 @@ if (btnResetCheckins) {
       alert('❌ Error de conexión');
     }
   });
+}
+
+
+
+// ============ KIT DELIVERY VIEW ============
+const kitFilterCompetition = document.getElementById('kit-filter-competition');
+const kitSearchInput = document.getElementById('kit-search-input');
+const kitList = document.getElementById('kit-list');
+
+if (kitFilterCompetition) kitFilterCompetition.addEventListener('change', loadKitList);
+if (kitSearchInput) kitSearchInput.addEventListener('keyup', loadKitList);
+
+async function loadKitList() {
+  try {
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) {
+      kitList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+      return;
+    }
+
+    // Populate filter (once)
+    if (kitFilterCompetition && kitFilterCompetition.options.length <= 1) {
+      const comps = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+      comps.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        kitFilterCompetition.appendChild(opt);
+      });
+    }
+
+    // Filter: only checked-in but kit NOT delivered
+    let filtered = participants.filter(p => p.checkedIn && !p.kitRetirado);
+
+    // Apply competition filter
+    if (kitFilterCompetition && kitFilterCompetition.value) {
+      filtered = filtered.filter(p => p.competencia === kitFilterCompetition.value);
+    }
+
+    // Apply search
+    if (kitSearchInput && kitSearchInput.value.trim()) {
+      const query = kitSearchInput.value.trim().toLowerCase();
+      filtered = filtered.filter(p => {
+        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+      });
+    }
+
+    filtered.sort((a, b) => a.dorsal - b.dorsal);
+
+    if (filtered.length === 0) {
+      kitList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No hay participantes pendientes de kit</p>';
+      return;
+    }
+
+    kitList.innerHTML = filtered.map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      return `
+        <div class="send-card" style="${cardStyle}">
+          <div class="send-info">
+            <span class="dorsal">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto">
+              <span>🏷️ ${p.categoria || ''}</span>
+              <span>🏅 ${p.competencia || ''}</span>
+              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="entregarKit(${p.dorsal})" style="white-space:nowrap;">
+            📦 Entregar Kit
+          </button>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    kitList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+  }
+}
+
+async function entregarKit(dorsal) {
+  try {
+    const res = await fetch(`/api/checkin/${dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'kit' })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      // Reload the kit list (participant moves to completados)
+      loadKitList();
+    } else {
+      alert(data.message || data.error);
+    }
+  } catch (err) {
+    alert('Error al registrar entrega de kit');
+  }
+}
+
+// ============ COMPLETADOS VIEW ============
+const completadosFilterCompetition = document.getElementById('completados-filter-competition');
+const completadosList = document.getElementById('completados-list');
+const completadosCount = document.getElementById('completados-count');
+
+if (completadosFilterCompetition) completadosFilterCompetition.addEventListener('change', loadCompletadosList);
+
+async function loadCompletadosList() {
+  try {
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) {
+      completadosList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+      return;
+    }
+
+    // Populate filter (once)
+    if (completadosFilterCompetition && completadosFilterCompetition.options.length <= 1) {
+      const comps = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+      comps.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        completadosFilterCompetition.appendChild(opt);
+      });
+    }
+
+    // Filter: both check-in AND kit delivered
+    let filtered = participants.filter(p => p.checkedIn && p.kitRetirado);
+
+    // Apply competition filter
+    if (completadosFilterCompetition && completadosFilterCompetition.value) {
+      filtered = filtered.filter(p => p.competencia === completadosFilterCompetition.value);
+    }
+
+    filtered.sort((a, b) => a.dorsal - b.dorsal);
+
+    if (completadosCount) {
+      completadosCount.textContent = `✅ ${filtered.length} participante(s) completado(s)`;
+    }
+
+    if (filtered.length === 0) {
+      completadosList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">Aún no hay participantes completados</p>';
+      return;
+    }
+
+    completadosList.innerHTML = filtered.map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const kitTime = p.kitRetiroTime ? new Date(p.kitRetiroTime).toLocaleString('es-CR') : '';
+      return `
+        <div class="send-card" style="${cardStyle}">
+          <div class="send-info">
+            <span class="dorsal">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto">
+              <span>🏅 ${p.competencia || ''}</span>
+              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+              <span>📦 ${kitTime}</span>
+            </div>
+          </div>
+          <div class="participant-status">✅📦</div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    completadosList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+  }
 }
