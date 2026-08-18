@@ -5,28 +5,20 @@ export async function onRequestPost(context) {
   const dorsal = parseInt(params.dorsal);
 
   try {
-    let stage = "registro"; // default stage
+    let stage = "registro";
     try {
       const body = await request.json();
       if (body.stage) stage = body.stage;
-    } catch (e) {
-      // No body or invalid JSON, use default
-    }
+    } catch (e) {}
 
     const participantsRaw = await env.CHECKIN_KV.get("participants", { type: "json" });
     if (!participantsRaw) {
-      return new Response(JSON.stringify({ error: "No hay datos" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "No hay datos" }, { status: 404 });
     }
 
     const participant = participantsRaw.find(p => p.dorsal === dorsal);
     if (!participant) {
-      return new Response(JSON.stringify({ error: "Participante no encontrado" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "Participante no encontrado" }, { status: 404 });
     }
 
     // Get existing check-in data
@@ -34,50 +26,66 @@ export async function onRequestPost(context) {
 
     if (stage === "registro") {
       if (existing.checkedIn) {
-        return new Response(JSON.stringify({
+        return Response.json({
           error: "Ya registrado",
-          message: `${participant.nombre} ya hizo check-in de registro a las ${existing.checkInTime}`,
+          message: `${participant.nombre} ${participant.apellidos || ''} ya hizo check-in de registro`,
           participant: { ...participant, ...existing }
-        }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
+        }, { status: 400 });
       }
 
       existing.checkedIn = true;
       existing.checkInTime = new Date().toISOString();
+      await env.CHECKIN_KV.put(`checkin:${dorsal}`, JSON.stringify(existing));
+
+      // Add to kit-pending list
+      const pendingList = await env.CHECKIN_KV.get("kit-pending-list", { type: "json" }) || [];
+      pendingList.push({
+        ...participant,
+        checkedIn: true,
+        checkInTime: existing.checkInTime,
+        kitRetirado: false,
+        kitRetiroTime: null
+      });
+      await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(pendingList));
 
     } else if (stage === "kit") {
       if (existing.kitRetirado) {
-        return new Response(JSON.stringify({
+        return Response.json({
           error: "Kit ya retirado",
-          message: `${participant.nombre} ya retiró el kit a las ${existing.kitRetiroTime}`,
+          message: `${participant.nombre} ${participant.apellidos || ''} ya retiró el kit`,
           participant: { ...participant, ...existing }
-        }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
+        }, { status: 400 });
       }
 
       existing.kitRetirado = true;
       existing.kitRetiroTime = new Date().toISOString();
-    }
+      await env.CHECKIN_KV.put(`checkin:${dorsal}`, JSON.stringify(existing));
 
-    await env.CHECKIN_KV.put(`checkin:${dorsal}`, JSON.stringify(existing));
+      // Remove from kit-pending list
+      const pendingList = await env.CHECKIN_KV.get("kit-pending-list", { type: "json" }) || [];
+      const updated = pendingList.filter(p => p.dorsal !== dorsal);
+      await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(updated));
+
+      // Add to completados list
+      const completadosList = await env.CHECKIN_KV.get("completados-list", { type: "json" }) || [];
+      completadosList.push({
+        ...participant,
+        checkedIn: true,
+        checkInTime: existing.checkInTime,
+        kitRetirado: true,
+        kitRetiroTime: existing.kitRetiroTime
+      });
+      await env.CHECKIN_KV.put("completados-list", JSON.stringify(completadosList));
+    }
 
     const stageLabel = stage === "registro" ? "Check-in de registro" : "Retiro de kit";
 
-    return new Response(JSON.stringify({
+    return Response.json({
       success: true,
-      message: `${stageLabel} exitoso para ${participant.nombre}`,
+      message: `${stageLabel} exitoso para ${participant.nombre} ${participant.apellidos || ''}`,
       participant: { ...participant, ...existing }
-    }), {
-      headers: { "Content-Type": "application/json" }
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Error interno", details: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json({ error: "Error interno", details: err.message }, { status: 500 });
   }
 }
