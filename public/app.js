@@ -1076,7 +1076,9 @@ const moduleKit = document.getElementById('module-kit');
 const moduleCompletados = document.getElementById('module-completados');
 
 function loadModuleSettings() {
-  const settings = JSON.parse(localStorage.getItem('xterra-modules') || '{"scanner":true,"qrcodes":true,"send":true,"kit":true,"completados":true}');
+  const defaults = { scanner: true, qrcodes: true, send: true, kit: true, completados: true };
+  const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
+  const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
   if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
   if (moduleSend) moduleSend.checked = settings.send !== false;
