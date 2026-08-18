@@ -508,7 +508,7 @@ function createParticipantCard(p) {
         <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${getDisplayName(p)}</div>
         <div class="participant-details">
-          ${p.categoria && /\d/.test(p.categoria) ? `<span>🏷️ ${p.categoria}</span>` : ''}
+          ${p.categoria ? `<span>🏷️ ${p.categoria}</span>` : ''}
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
@@ -1117,10 +1117,9 @@ function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
 
-  // Parse header - normalize column names
-  const rawHeader = lines[0].split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, ''));
-  // Remove empty leading columns
-  const header = rawHeader;
+  // Parse header - normalize column names, remove BOM
+  const rawHeaderLine = lines[0].replace(/^\uFEFF/, ''); // Remove BOM
+  const header = rawHeaderLine.split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, ''));
 
   // Map common column name variations
   const colMap = {};
@@ -1168,11 +1167,6 @@ function parseCSV(text) {
     if (colMap.color !== undefined) p.color = cols[colMap.color] || '';
 
     if (p.dorsal && p.nombre) {
-      // Fix: if categoria looks like a name (no numbers), it's probably misaligned
-      if (p.categoria && !/\d/.test(p.categoria) && !p.categoria.includes(' A ') && !p.categoria.includes('+')) {
-        // categoria field has wrong data - clear it
-        p.categoria = '';
-      }
       participants.push(p);
     }
   }
