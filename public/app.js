@@ -1338,7 +1338,12 @@ async function loadKitList() {
       });
     }
 
-    filtered.sort((a, b) => a.dorsal - b.dorsal);
+    filtered.sort((a, b) => {
+      // Sort by check-in time (oldest first = first to arrive, first to get kit)
+      const timeA = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
+      const timeB = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
+      return timeA - timeB;
+    });
 
     if (filtered.length === 0) {
       kitList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No hay participantes pendientes de kit</p>';
