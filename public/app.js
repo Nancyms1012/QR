@@ -538,13 +538,14 @@ async function loadStats() {
     const pctRegistro = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
     const pctKit = stats.total > 0 ? Math.round((stats.kitRetirado / stats.total) * 100) : 0;
 
-    let categoriesHTML = '';
-    for (const [cat, data] of Object.entries(stats.categories)) {
+    let competenciasHTML = '';
+    for (const [comp, data] of Object.entries(stats.competencias || {})) {
       const catPctR = data.total > 0 ? Math.round((data.checkedIn / data.total) * 100) : 0;
       const catPctK = data.total > 0 ? Math.round((data.kitRetirado / data.total) * 100) : 0;
-      categoriesHTML += `
+      competenciasHTML += `
         <div class="stat-card">
-          <h3>${cat}</h3>
+          <h3>${comp}</h3>
+          <p style="font-size:0.85rem;color:var(--text-light);">Total: <strong>${data.total}</strong></p>
           <p>✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
           <div class="progress-bar"><div class="progress-fill" style="width: ${catPctR}%"></div></div>
           <p style="margin-top:0.4rem;">📦 Kit: <strong>${data.kitRetirado}</strong> / ${data.total}</p>
@@ -566,7 +567,8 @@ async function loadStats() {
         <p style="color:var(--text-light)">${pctKit}% retirados · ${stats.pendingKit} pendientes</p>
         <div class="progress-bar"><div class="progress-fill" style="width: ${pctKit}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div></div>
       </div>
-      <div class="stat-grid">${categoriesHTML}</div>
+      <h3 style="margin-top:1rem;">Por Competencia</h3>
+      <div class="stat-grid">${competenciasHTML}</div>
     `;
   } catch (err) {
     document.getElementById('stats-container').innerHTML = '<p style="color:red;">Error al cargar estadísticas</p>';
