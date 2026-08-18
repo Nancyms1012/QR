@@ -1353,6 +1353,7 @@ async function loadKitList() {
     kitList.innerHTML = filtered.map(p => {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const generoLabel = p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero || '';
       return `
         <div class="send-card" style="${cardStyle}">
           <div class="send-info">
@@ -1361,7 +1362,10 @@ async function loadKitList() {
             <div class="contacto">
               <span>🏷️ ${p.categoria || ''}</span>
               <span>🏅 ${p.competencia || ''}</span>
-              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+            </div>
+            <div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+              ${p.talla ? `<span style="background:#2563eb;color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:1.1rem;font-weight:700;">👕 ${p.talla}</span>` : ''}
+              ${generoLabel ? `<span style="background:#9333ea;color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:1.1rem;font-weight:700;">⚧️ ${generoLabel}</span>` : ''}
             </div>
           </div>
           <button class="btn btn-primary" onclick="entregarKit(${p.dorsal})" style="white-space:nowrap;">
