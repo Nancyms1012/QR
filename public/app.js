@@ -160,7 +160,7 @@ async function showCheckinModal(dorsal) {
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
         ${currentParticipant.id_participante ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">🆔 ${currentParticipant.id_participante}</div>` : ''}
         ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: ${currentParticipant.licencia}</div>` : ''}
-        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#dc2626;font-weight:700;font-size:1rem;">✓ SOCIO</span>' : 'Socio: NO'}</div>` : ''}
+        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#16a34a;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span>' : 'Socio: NO'}</div>` : ''}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
         ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
@@ -563,7 +563,7 @@ function createParticipantCard(p) {
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#dc2626;color:white;font-weight:700;">✓ SOCIO</span>` : p.socio ? `<span>Socio: NO</span>` : ''}
+          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#16a34a;color:white;font-weight:700;">✓ SOCIO: SÍ</span>` : p.socio ? `<span>Socio: NO</span>` : ''}
         </div>
       </div>
       <div class="participant-status">${statusIcon}</div>
