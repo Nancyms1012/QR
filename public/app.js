@@ -563,6 +563,7 @@ function createParticipantCard(p) {
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#dc2626;color:white;font-weight:700;">✓ SOCIO</span>` : ''}
         </div>
       </div>
       <div class="participant-status">${statusIcon}</div>
