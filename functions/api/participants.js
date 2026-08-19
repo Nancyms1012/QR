@@ -42,6 +42,8 @@ export async function onRequestGet(context) {
       const checkin = checkinData[String(p.dorsal)];
       return {
         ...p,
+        liberacion: checkin ? Boolean(checkin.liberacion) : false,
+        liberacionTime: checkin ? checkin.liberacionTime : null,
         checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
         checkInTime: checkin ? checkin.checkInTime : null,
         kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,

@@ -14,6 +14,7 @@
     <nav>
       <button class="nav-btn" data-view="scanner">📷 Escáner</button>
       <button class="nav-btn active" data-view="manual">🔍 Buscar</button>
+      <button class="nav-btn" data-view="liberacion">✍️ Liberación</button>
       <button class="nav-btn" data-view="list">📋 Lista</button>
       <button class="nav-btn" data-view="stats">📊 Stats</button>
       <button class="nav-btn" data-view="kit">📦 Entrega Kit</button>
@@ -50,6 +51,21 @@
         <button id="btn-search" class="btn btn-primary">Buscar</button>
       </div>
       <div id="search-results"></div>
+    </section>
+
+    <!-- LIBERACION VIEW -->
+    <section id="view-liberacion" class="view">
+      <h2>✍️ Liberación de Responsabilidad</h2>
+      <p class="hint">Marcá a los participantes que ya firmaron el documento de liberación. Sin esto no podrán hacer check-in de registro.</p>
+      <div class="filters">
+        <select id="lib-filter-competition">
+          <option value="">Todas las competencias</option>
+        </select>
+      </div>
+      <div class="search-box">
+        <input type="text" id="lib-search-input" placeholder="🔍 Buscar por dorsal o nombre..." autocomplete="off">
+      </div>
+      <div id="lib-list" class="send-list"></div>
     </section>
 
     <!-- LIST VIEW -->
@@ -146,6 +162,9 @@
         <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem;">
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
             <input type="checkbox" id="module-scanner" style="width:18px;height:18px;cursor:pointer;"> 📷 Escáner QR
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
+            <input type="checkbox" id="module-liberacion" style="width:18px;height:18px;cursor:pointer;"> ✍️ Liberación
           </label>
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
             <input type="checkbox" id="module-qrcodes" style="width:18px;height:18px;cursor:pointer;"> 🏷️ QR Codes

@@ -18,6 +18,7 @@ navButtons.forEach(btn => {
     if (viewId === 'send') loadSendList();
     if (viewId === 'kit') loadKitList();
     if (viewId === 'completados') loadCompletadosList();
+    if (viewId === 'liberacion') loadLiberacionList();
     if (viewId === 'admin') initAdmin();
   });
 });
@@ -143,16 +144,19 @@ async function showCheckinModal(dorsal) {
 
     const isChecked = currentParticipant.checkedIn;
     const isKit = currentParticipant.kitRetirado;
+    const isLib = currentParticipant.liberacion;
     const checkTime = currentParticipant.checkInTime
       ? new Date(currentParticipant.checkInTime).toLocaleString('es-CR')
       : '';
     const kitTime = currentParticipant.kitRetiroTime
       ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
       : '';
+    const libTime = currentParticipant.liberacionTime
+      ? new Date(currentParticipant.liberacionTime).toLocaleString('es-CR')
+      : '';
 
     const bgColor = getColorForParticipant(currentParticipant);
     const modalColorStyle = bgColor ? `border-left: 6px solid ${bgColor}; background: ${bgColor}15; padding: 1rem; border-radius: 8px;` : '';
-    const socioLabel = currentParticipant.socio && currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#dc2626;font-weight:700;font-size:1rem;">✓ SOCIO</span>' : (currentParticipant.socio || '');
 
     modalBody.innerHTML = `
       <div style="${modalColorStyle}">
@@ -166,6 +170,9 @@ async function showCheckinModal(dorsal) {
         ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem;margin:1rem 0;">
+        <div class="status-badge ${isLib ? 'checked' : 'pending'}">
+          ${isLib ? `✍️ Liberación: ${libTime}` : '⏳ Liberación: Pendiente'}
+        </div>
         <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
           ${isChecked ? `✅ Registro: ${checkTime}` : '⏳ Registro: Pendiente'}
         </div>
@@ -179,10 +186,11 @@ async function showCheckinModal(dorsal) {
     const btnConfirmKit = document.getElementById('btn-confirm-kit');
 
     // Show/hide buttons based on status
-    if (isChecked) {
-      btnConfirmCheckin.classList.add('hidden');
-    } else {
+    // Registro only if liberacion done
+    if (isLib && !isChecked) {
       btnConfirmCheckin.classList.remove('hidden');
+    } else {
+      btnConfirmCheckin.classList.add('hidden');
     }
 
     // Kit button only available if registro is done
@@ -192,7 +200,7 @@ async function showCheckinModal(dorsal) {
       btnConfirmKit.classList.add('hidden');
     }
 
-    if (isChecked || isKit) {
+    if (isLib || isChecked || isKit) {
       btnUndoCheckin.classList.remove('hidden');
     } else {
       btnUndoCheckin.classList.add('hidden');
@@ -1082,16 +1090,18 @@ function initAdmin() {
 
 // Module visibility
 const moduleScanner = document.getElementById('module-scanner');
+const moduleLiberacion = document.getElementById('module-liberacion');
 const moduleQrcodes = document.getElementById('module-qrcodes');
 const moduleSend = document.getElementById('module-send');
 const moduleKit = document.getElementById('module-kit');
 const moduleCompletados = document.getElementById('module-completados');
 
 function loadModuleSettings() {
-  const defaults = { scanner: true, qrcodes: true, send: true, kit: true, completados: true };
+  const defaults = { scanner: true, liberacion: true, qrcodes: true, send: true, kit: true, completados: true };
   const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
   const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
+  if (moduleLiberacion) moduleLiberacion.checked = settings.liberacion !== false;
   if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
   if (moduleSend) moduleSend.checked = settings.send !== false;
   if (moduleKit) moduleKit.checked = settings.kit !== false;
@@ -1101,12 +1111,14 @@ function loadModuleSettings() {
 
 function applyModuleVisibility(settings) {
   const scannerTab = document.querySelector('[data-view="scanner"]');
+  const liberacionTab = document.querySelector('[data-view="liberacion"]');
   const qrcodesTab = document.querySelector('[data-view="qrcodes"]');
   const sendTab = document.querySelector('[data-view="send"]');
   const kitTab = document.querySelector('[data-view="kit"]');
   const completadosTab = document.querySelector('[data-view="completados"]');
 
   if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
+  if (liberacionTab) liberacionTab.style.display = settings.liberacion !== false ? '' : 'none';
   if (qrcodesTab) qrcodesTab.style.display = settings.qrcodes !== false ? '' : 'none';
   if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
   if (kitTab) kitTab.style.display = settings.kit !== false ? '' : 'none';
@@ -1116,6 +1128,7 @@ function applyModuleVisibility(settings) {
 function saveModuleSettings() {
   const settings = {
     scanner: moduleScanner ? moduleScanner.checked : true,
+    liberacion: moduleLiberacion ? moduleLiberacion.checked : true,
     qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
     send: moduleSend ? moduleSend.checked : true,
     kit: moduleKit ? moduleKit.checked : true,
@@ -1126,6 +1139,7 @@ function saveModuleSettings() {
 }
 
 if (moduleScanner) moduleScanner.addEventListener('change', saveModuleSettings);
+if (moduleLiberacion) moduleLiberacion.addEventListener('change', saveModuleSettings);
 if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
 if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
 if (moduleKit) moduleKit.addEventListener('change', saveModuleSettings);
@@ -1483,5 +1497,102 @@ async function loadCompletadosList() {
     }).join('');
   } catch (err) {
     completadosList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+  }
+}
+
+
+
+// ============ LIBERACION VIEW ============
+const libFilterCompetition = document.getElementById('lib-filter-competition');
+const libSearchInput = document.getElementById('lib-search-input');
+const libList = document.getElementById('lib-list');
+
+if (libFilterCompetition) libFilterCompetition.addEventListener('change', loadLiberacionList);
+if (libSearchInput) libSearchInput.addEventListener('keyup', loadLiberacionList);
+
+async function loadLiberacionList() {
+  try {
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) {
+      libList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+      return;
+    }
+
+    // Populate filter (once)
+    if (libFilterCompetition && libFilterCompetition.options.length <= 1) {
+      const comps = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+      comps.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        libFilterCompetition.appendChild(opt);
+      });
+    }
+
+    // Filter: only those WITHOUT liberacion
+    let filtered = participants.filter(p => !p.liberacion);
+
+    // Apply competition filter
+    if (libFilterCompetition && libFilterCompetition.value) {
+      filtered = filtered.filter(p => p.competencia === libFilterCompetition.value);
+    }
+
+    // Apply search
+    if (libSearchInput && libSearchInput.value.trim()) {
+      const query = libSearchInput.value.trim().toLowerCase();
+      filtered = filtered.filter(p => {
+        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+      });
+    }
+
+    filtered.sort((a, b) => a.dorsal - b.dorsal);
+
+    if (filtered.length === 0) {
+      libList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">Todos han firmado la liberación ✅</p>';
+      return;
+    }
+
+    libList.innerHTML = filtered.map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      return `
+        <div class="send-card" style="${cardStyle}">
+          <div class="send-info">
+            <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto">
+              <span>🏅 ${p.competencia || ''}</span>
+              <span>🏷️ ${p.categoria || ''}</span>
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="marcarLiberacion(${p.dorsal})" style="white-space:nowrap;">
+            ✍️ Firmó
+          </button>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    libList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+  }
+}
+
+async function marcarLiberacion(dorsal) {
+  try {
+    const res = await fetch(`/api/checkin/${dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'liberacion' })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      loadLiberacionList();
+    } else {
+      alert(data.message || data.error);
+    }
+  } catch (err) {
+    alert('Error al marcar liberación');
   }
 }
