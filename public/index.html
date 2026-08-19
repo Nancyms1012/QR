@@ -10,10 +10,10 @@
 </head>
 <body>
   <header>
-    <img src="/logo-xterra.png" alt="XTERRA CR" style="max-width:150px;height:auto;margin-bottom:0.5rem;">
+    <img src="/logo-xterra.png" alt="XTERRA CR" style="max-width:120px;height:auto;margin-bottom:0.4rem;border-radius:4px;mix-blend-mode:multiply;">
     <nav>
-      <button class="nav-btn active" data-view="scanner">📷 Escáner</button>
-      <button class="nav-btn" data-view="manual">🔍 Buscar</button>
+      <button class="nav-btn" data-view="scanner">📷 Escáner</button>
+      <button class="nav-btn active" data-view="manual">🔍 Buscar</button>
       <button class="nav-btn" data-view="list">📋 Lista</button>
       <button class="nav-btn" data-view="stats">📊 Stats</button>
       <button class="nav-btn" data-view="kit">📦 Entrega Kit</button>
@@ -30,7 +30,7 @@
       <label style="font-size:0.75rem;cursor:pointer;color:var(--text-light);"><input type="checkbox" id="toggle-autorefresh" style="vertical-align:middle;cursor:pointer;"> Auto 30s</label>
     </div>
     <!-- SCANNER VIEW -->
-    <section id="view-scanner" class="view active">
+    <section id="view-scanner" class="view">
       <div class="scanner-container">
         <h2>Escanear Código QR</h2>
         <div id="qr-reader"></div>
@@ -43,7 +43,7 @@
     </section>
 
     <!-- MANUAL SEARCH VIEW -->
-    <section id="view-manual" class="view">
+    <section id="view-manual" class="view active">
       <h2>Búsqueda Manual</h2>
       <div class="search-box">
         <input type="text" id="search-input" placeholder="Buscar por dorsal o nombre..." autocomplete="off">

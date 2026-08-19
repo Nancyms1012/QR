@@ -1,7 +1,7 @@
 // ============ NAVIGATION ============
 const navButtons = document.querySelectorAll('.nav-btn');
 const views = document.querySelectorAll('.view');
-let currentView = 'scanner';
+let currentView = 'manual';
 
 navButtons.forEach(btn => {
   btn.addEventListener('click', () => {
