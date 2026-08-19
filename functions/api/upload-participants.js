@@ -42,7 +42,10 @@ export async function onRequestPost(context) {
         talla: String(p.talla || '').trim(),
         color: String(p.color || '').trim(),
         telefono: String(p.telefono || '').trim(),
-        email: String(p.email || '').trim()
+        email: String(p.email || '').trim(),
+        id_participante: String(p.id_participante || p.id || '').trim(),
+        socio: String(p.socio || '').trim(),
+        licencia: String(p.licencia || '').trim()
       });
     }
 

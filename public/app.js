@@ -308,6 +308,9 @@ btnEditContact.addEventListener('click', () => {
   document.getElementById('edit-talla').value = currentParticipant.talla || '';
   editTelefono.value = currentParticipant.telefono || '';
   editEmail.value = currentParticipant.email || '';
+  document.getElementById('edit-id-participante').value = currentParticipant.id_participante || '';
+  document.getElementById('edit-socio').value = currentParticipant.socio || '';
+  document.getElementById('edit-licencia').value = currentParticipant.licencia || '';
   modal.classList.add('hidden');
   editModal.classList.remove('hidden');
 });
@@ -336,19 +339,22 @@ btnSaveContact.addEventListener('click', async () => {
   const talla = document.getElementById('edit-talla').value.trim();
   const telefono = editTelefono.value.trim();
   const email = editEmail.value.trim();
+  const id_participante = document.getElementById('edit-id-participante').value.trim();
+  const socio = document.getElementById('edit-socio').value.trim();
+  const licencia = document.getElementById('edit-licencia').value.trim();
 
   try {
     const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, telefono, email })
+      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia })
     });
 
     const data = await res.json();
 
     if (res.ok) {
       alert(`✅ Datos actualizados`);
-      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, telefono, email });
+      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia });
       editModal.classList.add('hidden');
       showCheckinModal(currentParticipant.dorsal);
     } else {
@@ -1234,6 +1240,9 @@ function parseCSV(text) {
     else if (h === 'EMAIL' || h === 'CORREO' || h === 'MAIL') colMap.email = i;
     else if (h === 'TALLA' || h === 'SIZE' || h === 'JERSEY') colMap.talla = i;
     else if (h === 'COLOR' || h === 'COLOR_DORSAL') colMap.color = i;
+    else if (h === 'ID' || h === 'ID_PARTICIPANTE') colMap.id_participante = i;
+    else if (h === 'SOCIO') colMap.socio = i;
+    else if (h === 'LICENCIA' || h === 'LICENSE') colMap.licencia = i;
   });
 
   // Debug alert - remove after confirming it works
@@ -1263,6 +1272,9 @@ function parseCSV(text) {
     if (colMap.email !== undefined) p.email = cols[colMap.email] || '';
     if (colMap.talla !== undefined) p.talla = cols[colMap.talla] || '';
     if (colMap.color !== undefined) p.color = cols[colMap.color] || '';
+    if (colMap.id_participante !== undefined) p.id_participante = cols[colMap.id_participante] || '';
+    if (colMap.socio !== undefined) p.socio = cols[colMap.socio] || '';
+    if (colMap.licencia !== undefined) p.licencia = cols[colMap.licencia] || '';
 
     if (p.dorsal && p.nombre) {
       participants.push(p);

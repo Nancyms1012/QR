@@ -87,6 +87,9 @@ export async function onRequestPut(context) {
     if (body.competencia !== undefined) participantsRaw[index].competencia = body.competencia;
     if (body.talla !== undefined) participantsRaw[index].talla = body.talla;
     if (body.color !== undefined) participantsRaw[index].color = body.color;
+    if (body.id_participante !== undefined) participantsRaw[index].id_participante = body.id_participante;
+    if (body.socio !== undefined) participantsRaw[index].socio = body.socio;
+    if (body.licencia !== undefined) participantsRaw[index].licencia = body.licencia;
 
     // Save back to KV
     await env.CHECKIN_KV.put("participants", JSON.stringify(participantsRaw));
