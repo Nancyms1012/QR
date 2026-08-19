@@ -152,14 +152,18 @@ async function showCheckinModal(dorsal) {
 
     const bgColor = getColorForParticipant(currentParticipant);
     const modalColorStyle = bgColor ? `border-left: 6px solid ${bgColor}; background: ${bgColor}15; padding: 1rem; border-radius: 8px;` : '';
+    const socioLabel = currentParticipant.socio && currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#dc2626;font-weight:700;font-size:1rem;">✓ SOCIO</span>' : (currentParticipant.socio || '');
 
     modalBody.innerHTML = `
       <div style="${modalColorStyle}">
         <div class="dorsal-big">#${currentParticipant.dorsal}</div>
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
+        ${currentParticipant.id_participante ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">🆔 ${currentParticipant.id_participante}</div>` : ''}
+        ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: ${currentParticipant.licencia}</div>` : ''}
+        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${socioLabel}</div>` : ''}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
-        ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">🏅 ${currentParticipant.competencia}</span></div>` : ''}
-        ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
+        ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
+        ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem;margin:1rem 0;">
         <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
