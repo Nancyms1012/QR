@@ -1567,17 +1567,11 @@ const libList = document.getElementById('lib-list');
 if (libSearchInput) libSearchInput.addEventListener('keyup', searchForLiberacion);
 
 async function loadLiberacionList() {
-  // Load the list of recently signed (those with liberacion = true)
+  // Load the list of recently signed
   try {
-    const res = await fetch('/api/participants');
-    const participants = await res.json();
-    if (!Array.isArray(participants)) return;
-
-    const firmados = participants.filter(p => p.liberacion).sort((a, b) => {
-      const tA = a.liberacionTime ? new Date(a.liberacionTime).getTime() : 0;
-      const tB = b.liberacionTime ? new Date(b.liberacionTime).getTime() : 0;
-      return tB - tA; // Most recent first
-    });
+    const res = await fetch('/api/liberacion-firmados');
+    const firmados = await res.json();
+    if (!Array.isArray(firmados)) return;
 
     if (firmados.length === 0) {
       libList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">Aún no hay firmas registradas</p>';
