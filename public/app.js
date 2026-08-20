@@ -1583,25 +1583,13 @@ async function searchForRegistro() {
       return;
     }
 
-    regSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
-      const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
-      return `
-        <div class="send-card" style="${cardStyle}">
-          <div class="send-info" onclick="showCheckinModal(${p.uid})" style="cursor:pointer;">
-            <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
-            <div class="nombre">${getDisplayName(p)}</div>
-            <div class="contacto">
-              <span>🏅 ${p.competencia || ''}</span>
-              <span>🏷️ ${p.categoria || ''}</span>
-            </div>
-          </div>
-          <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.uid})" style="white-space:nowrap;">
-            ✅ Registrar
-          </button>
-        </div>
-      `;
-    }).join('');
+    regSearchResults.innerHTML = filtered.slice(0, 10).map(p => createParticipantCard(p)).join('');
+    // Attach click listeners
+    regSearchResults.querySelectorAll('.participant-card').forEach(card => {
+      card.addEventListener('click', () => {
+        showCheckinModal(parseInt(card.dataset.uid));
+      });
+    });
   } catch (err) {
     regSearchResults.innerHTML = '';
   }
