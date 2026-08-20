@@ -19,6 +19,7 @@ navButtons.forEach(btn => {
     if (viewId === 'kit') loadKitList();
     if (viewId === 'completados') loadCompletadosList();
     if (viewId === 'registro') loadRegistroList();
+    if (viewId === 'kids') loadKidsView();
     if (viewId === 'admin') initAdmin();
   });
 });
@@ -1111,9 +1112,10 @@ const moduleQrcodes = document.getElementById('module-qrcodes');
 const moduleSend = document.getElementById('module-send');
 const moduleKit = document.getElementById('module-kit');
 const moduleCompletados = document.getElementById('module-completados');
+const moduleKids = document.getElementById('module-kids');
 
 function loadModuleSettings() {
-  const defaults = { scanner: true, registro: true, qrcodes: true, send: true, kit: true, completados: true };
+  const defaults = { scanner: true, registro: true, qrcodes: true, send: true, kit: true, completados: true, kids: true };
   const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
   const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
@@ -1122,6 +1124,7 @@ function loadModuleSettings() {
   if (moduleSend) moduleSend.checked = settings.send !== false;
   if (moduleKit) moduleKit.checked = settings.kit !== false;
   if (moduleCompletados) moduleCompletados.checked = settings.completados !== false;
+  if (moduleKids) moduleKids.checked = settings.kids !== false;
   applyModuleVisibility(settings);
 }
 
@@ -1132,6 +1135,7 @@ function applyModuleVisibility(settings) {
   const sendTab = document.querySelector('[data-view="send"]');
   const kitTab = document.querySelector('[data-view="kit"]');
   const completadosTab = document.querySelector('[data-view="completados"]');
+  const kidsTab = document.querySelector('[data-view="kids"]');
 
   if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
   if (registroTab) registroTab.style.display = settings.registro !== false ? '' : 'none';
@@ -1139,6 +1143,7 @@ function applyModuleVisibility(settings) {
   if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
   if (kitTab) kitTab.style.display = settings.kit !== false ? '' : 'none';
   if (completadosTab) completadosTab.style.display = settings.completados !== false ? '' : 'none';
+  if (kidsTab) kidsTab.style.display = settings.kids !== false ? '' : 'none';
 }
 
 function saveModuleSettings() {
@@ -1148,7 +1153,8 @@ function saveModuleSettings() {
     qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
     send: moduleSend ? moduleSend.checked : true,
     kit: moduleKit ? moduleKit.checked : true,
-    completados: moduleCompletados ? moduleCompletados.checked : true
+    completados: moduleCompletados ? moduleCompletados.checked : true,
+    kids: moduleKids ? moduleKids.checked : true
   };
   localStorage.setItem('xterra-modules', JSON.stringify(settings));
   applyModuleVisibility(settings);
@@ -1160,6 +1166,7 @@ if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
 if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
 if (moduleKit) moduleKit.addEventListener('change', saveModuleSettings);
 if (moduleCompletados) moduleCompletados.addEventListener('change', saveModuleSettings);
+if (moduleKids) moduleKids.addEventListener('change', saveModuleSettings);
 
 // Load module settings on page load
 loadModuleSettings();
@@ -1613,5 +1620,184 @@ async function marcarRegistro(uid) {
     }
   } catch (err) {
     alert('Error al marcar registro');
+  }
+}
+
+
+
+// ============ KIDS REGISTRATION ============
+const KIDS_CATEGORIES = [
+  { name: '2-3 años', minAge: 2, maxAge: 3, capacity: 6 },
+  { name: '4-5 años', minAge: 4, maxAge: 5, capacity: 18 },
+  { name: '6-7 años', minAge: 6, maxAge: 7, capacity: 15 },
+  { name: '8-9 años', minAge: 8, maxAge: 9, capacity: 12 },
+  { name: '10-11 años', minAge: 10, maxAge: 11, capacity: 9 }
+];
+
+const kidsFechaInput = document.getElementById('kids-fecha');
+const kidsCategoriaDisplay = document.getElementById('kids-categoria-display');
+
+if (kidsFechaInput) {
+  kidsFechaInput.addEventListener('change', () => {
+    const cat = calculateKidsCategory(kidsFechaInput.value);
+    if (cat) {
+      kidsCategoriaDisplay.textContent = `🏷️ Categoría: ${cat.name}`;
+      kidsCategoriaDisplay.style.color = '#16a34a';
+    } else if (kidsFechaInput.value) {
+      kidsCategoriaDisplay.textContent = '❌ Edad no califica (debe ser entre 2 y 11 años al 31/dic/2026)';
+      kidsCategoriaDisplay.style.color = '#dc2626';
+    } else {
+      kidsCategoriaDisplay.textContent = '';
+    }
+  });
+}
+
+function calculateKidsCategory(dateStr) {
+  if (!dateStr) return null;
+  const birthDate = new Date(dateStr);
+  // Age at December 31, 2026
+  const refDate = new Date(2026, 11, 31);
+  let age = refDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = refDate.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && refDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return KIDS_CATEGORIES.find(c => age >= c.minAge && age <= c.maxAge) || null;
+}
+
+const btnKidsRegister = document.getElementById('btn-kids-register');
+const btnKidsExport = document.getElementById('btn-kids-export');
+
+if (btnKidsRegister) btnKidsRegister.addEventListener('click', registerKid);
+if (btnKidsExport) btnKidsExport.addEventListener('click', exportKids);
+
+async function loadKidsView() {
+  await loadKidsCapacity();
+  await loadKidsList();
+}
+
+async function loadKidsCapacity() {
+  const grid = document.getElementById('kids-capacity-grid');
+  if (!grid) return;
+
+  try {
+    const res = await fetch('/api/kids');
+    const kids = await res.json();
+    if (!Array.isArray(kids)) { grid.innerHTML = ''; return; }
+
+    grid.innerHTML = KIDS_CATEGORIES.map(cat => {
+      const count = kids.filter(k => k.categoria === cat.name).length;
+      const full = count >= cat.capacity;
+      const pct = Math.round((count / cat.capacity) * 100);
+      return `
+        <div style="background:${full ? '#fef2f2' : '#f0fdf4'};border:1px solid ${full ? '#fecaca' : '#bbf7d0'};border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-weight:700;font-size:0.9rem;">${cat.name}</div>
+          <div style="font-size:1.2rem;font-weight:800;color:${full ? '#dc2626' : '#16a34a'};">${count}/${cat.capacity}</div>
+          <div class="progress-bar" style="height:8px;margin-top:0.3rem;"><div class="progress-fill" style="width:${pct}%;${full ? 'background:#dc2626;' : ''}"></div></div>
+          ${full ? '<div style="font-size:0.7rem;color:#dc2626;font-weight:600;">COMPLETO</div>' : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    grid.innerHTML = '';
+  }
+}
+
+async function registerKid() {
+  const dorsal = document.getElementById('kids-dorsal').value.trim();
+  const nombre = document.getElementById('kids-nombre').value.trim();
+  const apellidos = document.getElementById('kids-apellidos').value.trim();
+  const fecha = document.getElementById('kids-fecha').value;
+  const responsable = document.getElementById('kids-responsable').value.trim();
+  const msgEl = document.getElementById('kids-message');
+
+  if (!dorsal || !nombre || !apellidos || !fecha || !responsable) {
+    msgEl.innerHTML = '<p style="color:#dc2626;">❌ Todos los campos son obligatorios</p>';
+    return;
+  }
+
+  const cat = calculateKidsCategory(fecha);
+  if (!cat) {
+    msgEl.innerHTML = '<p style="color:#dc2626;">❌ La edad no califica (2-11 años al 31/dic/2026)</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/kids', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dorsal, nombre, apellidos, fechaNacimiento: fecha, categoria: cat.name, responsable })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      msgEl.innerHTML = `<p style="color:#16a34a;">✅ ${nombre} ${apellidos} inscrito en ${cat.name}</p>`;
+      // Clear form
+      document.getElementById('kids-dorsal').value = '';
+      document.getElementById('kids-nombre').value = '';
+      document.getElementById('kids-apellidos').value = '';
+      document.getElementById('kids-fecha').value = '';
+      document.getElementById('kids-responsable').value = '';
+      kidsCategoriaDisplay.textContent = '';
+      loadKidsView();
+    } else {
+      msgEl.innerHTML = `<p style="color:#dc2626;">❌ ${data.error}</p>`;
+    }
+  } catch (err) {
+    msgEl.innerHTML = '<p style="color:#dc2626;">❌ Error de conexión</p>';
+  }
+}
+
+async function loadKidsList() {
+  const listEl = document.getElementById('kids-list');
+  if (!listEl) return;
+
+  try {
+    const res = await fetch('/api/kids');
+    const kids = await res.json();
+    if (!Array.isArray(kids) || kids.length === 0) {
+      listEl.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay inscritos aún</p>';
+      return;
+    }
+
+    listEl.innerHTML = kids.map(k => `
+      <div class="send-card" style="border-left:4px solid var(--primary);">
+        <div class="send-info">
+          <span class="dorsal">#${k.dorsal}</span>
+          <div class="nombre">${k.nombre} ${k.apellidos}</div>
+          <div class="contacto">
+            <span>🏷️ ${k.categoria}</span>
+            <span>🎂 ${k.fechaNacimiento}</span>
+            <span>👤 ${k.responsable}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    listEl.innerHTML = '';
+  }
+}
+
+async function exportKids() {
+  try {
+    const res = await fetch('/api/kids');
+    const kids = await res.json();
+    if (!Array.isArray(kids) || kids.length === 0) {
+      alert('No hay inscritos para exportar');
+      return;
+    }
+
+    // Generate CSV
+    const header = 'DORSAL;NOMBRE;APELLIDOS;FECHA_NACIMIENTO;CATEGORIA;RESPONSABLE';
+    const rows = kids.map(k => `${k.dorsal};${k.nombre};${k.apellidos};${k.fechaNacimiento};${k.categoria};${k.responsable}`);
+    const csv = [header, ...rows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'kids_inscritos.csv';
+    link.click();
+  } catch (err) {
+    alert('Error al exportar');
   }
 }
