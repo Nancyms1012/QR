@@ -522,7 +522,7 @@ function createParticipantCard(p) {
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;">✓ SOCIO: SÍ</span>` : p.socio ? `<span>Socio: NO</span>` : ''}
+          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;">✓ SOCIO: SÍ</span>` : `<span>Socio: NO</span>`}
           ${p.equipo ? `<span style="background:#f59e0b;color:white;font-weight:700;">🏆 ${p.equipo}</span>` : ''}
         </div>
       </div>
