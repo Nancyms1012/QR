@@ -478,10 +478,9 @@ function getColorForParticipant(p) {
   if (p.competencia) {
     const comp = p.competencia.toLowerCase();
     if (comp.includes('trail') && comp.includes('36')) return '#FF66CC';       // Rosado
-    if (comp.includes('trail') && comp.includes('24')) return '#6699FF';       // Azul
-    if (comp.includes('trail') && comp.includes('11')) return '#FFFF00';       // Amarillo
-    if (comp.includes('trail') && comp.includes('5.5')) return '#CCFF33';      // Verde
-    if (comp.includes('trail') && comp.includes('5 ')) return '#CCFF33';       // Verde (5 km)
+    if (comp.includes('trail') && (comp.includes('24') || comp.includes('21'))) return '#6699FF';       // Azul
+    if (comp.includes('trail') && (comp.includes('11') || comp.includes('12'))) return '#FFFF00';       // Amarillo
+    if (comp.includes('trail') && comp.includes('5')) return '#CCFF33';        // Verde
     if (comp.includes('aguas')) return '#e2e8f0';                               // Blanco
     if (comp.includes('triatl') || comp.includes('sprint') || comp.includes('full') || comp.includes('relevo')) return '#e2e8f0'; // Blanco
   }
@@ -510,7 +509,7 @@ function createParticipantCard(p) {
   const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
   
   const bgColor = getColorForParticipant(p);
-  const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+  const cardStyle = bgColor ? `border-left: 5px solid ${bgColor}; background: ${bgColor}25;` : '';
 
   return `
     <div class="participant-card ${statusClass}" data-uid="${p.uid}" style="${cardStyle}">
@@ -1346,7 +1345,7 @@ async function loadKitList() {
 
     kitList.innerHTML = filtered.map(p => {
       const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const cardStyle = bgColor ? `border-left: 5px solid ${bgColor}; background: ${bgColor}25;` : '';
       const generoLabel = p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero || '';
       return `
         <div class="send-card" style="${cardStyle}">
@@ -1440,7 +1439,7 @@ async function loadCompletadosList() {
 
     completadosList.innerHTML = filtered.map(p => {
       const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const cardStyle = bgColor ? `border-left: 5px solid ${bgColor}; background: ${bgColor}25;` : '';
       const kitTime = p.kitRetiroTime ? new Date(p.kitRetiroTime).toLocaleString('es-CR') : '';
       return `
         <div class="send-card" style="${cardStyle}">
@@ -1527,7 +1526,7 @@ async function searchForRegistro() {
 
     regSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
       const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const cardStyle = bgColor ? `border-left: 5px solid ${bgColor}; background: ${bgColor}25;` : '';
       return `
         <div class="send-card" style="${cardStyle}">
           <div class="send-info" onclick="showCheckinModal(${p.uid})" style="cursor:pointer;">
