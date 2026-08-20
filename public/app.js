@@ -1559,63 +1559,80 @@ async function loadCompletadosList() {
 
 
 // ============ LIBERACION VIEW ============
-const libFilterCompetition = document.getElementById('lib-filter-competition');
 const libSearchInput = document.getElementById('lib-search-input');
+const libSearchResults = document.getElementById('lib-search-results');
 const libList = document.getElementById('lib-list');
 
-if (libFilterCompetition) libFilterCompetition.addEventListener('change', loadLiberacionList);
-if (libSearchInput) libSearchInput.addEventListener('keyup', loadLiberacionList);
+if (libSearchInput) libSearchInput.addEventListener('keyup', searchForLiberacion);
 
 async function loadLiberacionList() {
+  // Load the list of recently signed (those with liberacion = true)
   try {
     const res = await fetch('/api/participants');
     const participants = await res.json();
-    if (!Array.isArray(participants)) {
-      libList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+    if (!Array.isArray(participants)) return;
+
+    const firmados = participants.filter(p => p.liberacion).sort((a, b) => {
+      const tA = a.liberacionTime ? new Date(a.liberacionTime).getTime() : 0;
+      const tB = b.liberacionTime ? new Date(b.liberacionTime).getTime() : 0;
+      return tB - tA; // Most recent first
+    });
+
+    if (firmados.length === 0) {
+      libList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">Aún no hay firmas registradas</p>';
       return;
     }
 
-    // Populate filter (once)
-    if (libFilterCompetition && libFilterCompetition.options.length <= 1) {
-      const comps = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
-      comps.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
-        libFilterCompetition.appendChild(opt);
-      });
-    }
+    libList.innerHTML = firmados.slice(0, 50).map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      const libTime = p.liberacionTime ? new Date(p.liberacionTime).toLocaleTimeString('es-CR') : '';
+      return `
+        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})">
+          <div class="send-info" style="cursor:pointer;">
+            <span class="dorsal">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto"><span>✍️ ${libTime}</span> <span>🏅 ${p.competencia || ''}</span></div>
+          </div>
+          <div class="participant-status">✅</div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    libList.innerHTML = '';
+  }
+}
 
-    // Filter: only those WITHOUT liberacion
+async function searchForLiberacion() {
+  const query = libSearchInput.value.trim().toLowerCase();
+  if (!query || query.length < 1) {
+    libSearchResults.innerHTML = '';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) return;
+
+    // Filter: search and only show those WITHOUT liberacion
     let filtered = participants.filter(p => !p.liberacion);
-
-    // Apply competition filter
-    if (libFilterCompetition && libFilterCompetition.value) {
-      filtered = filtered.filter(p => p.competencia === libFilterCompetition.value);
-    }
-
-    // Apply search
-    if (libSearchInput && libSearchInput.value.trim()) {
-      const query = libSearchInput.value.trim().toLowerCase();
-      filtered = filtered.filter(p => {
-        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
-        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
-      });
-    }
-
-    filtered.sort((a, b) => a.dorsal - b.dorsal);
+    filtered = filtered.filter(p => {
+      if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+      return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+    });
 
     if (filtered.length === 0) {
-      libList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">Todos han firmado la liberación ✅</p>';
+      libSearchResults.innerHTML = '<p style="color:#64748b;padding:0.5rem;">No se encontraron pendientes</p>';
       return;
     }
 
-    libList.innerHTML = filtered.map(p => {
+    libSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       return `
-        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})" data-dorsal="${p.dorsal}">
-          <div class="send-info" style="cursor:pointer;">
+        <div class="send-card" style="${cardStyle}">
+          <div class="send-info" onclick="showCheckinModal(${p.dorsal})" style="cursor:pointer;">
             <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
             <div class="contacto">
@@ -1630,7 +1647,7 @@ async function loadLiberacionList() {
       `;
     }).join('');
   } catch (err) {
-    libList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+    libSearchResults.innerHTML = '';
   }
 }
 
@@ -1644,6 +1661,8 @@ async function marcarLiberacion(dorsal) {
     const data = await res.json();
 
     if (res.ok) {
+      libSearchInput.value = '';
+      libSearchResults.innerHTML = '';
       loadLiberacionList();
     } else {
       alert(data.message || data.error);

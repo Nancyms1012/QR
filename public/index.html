@@ -57,15 +57,12 @@
     <!-- LIBERACION VIEW -->
     <section id="view-liberacion" class="view">
       <h2>✍️ Liberación de Responsabilidad</h2>
-      <p class="hint">Marcá a los participantes que ya firmaron el documento de liberación. Sin esto no podrán hacer check-in de registro.</p>
-      <div class="filters">
-        <select id="lib-filter-competition">
-          <option value="">Todas las competencias</option>
-        </select>
-      </div>
+      <p class="hint">Buscá al participante y marcá que firmó. Sin esto no podrá pasar a registro.</p>
       <div class="search-box">
-        <input type="text" id="lib-search-input" placeholder="🔍 Buscar por dorsal o nombre..." autocomplete="off">
+        <input type="text" id="lib-search-input" placeholder="🔍 Buscar por dorsal o nombre para marcar firma..." autocomplete="off">
       </div>
+      <div id="lib-search-results"></div>
+      <h3 style="margin-top:1.5rem;font-size:1rem;color:var(--text-light);">✅ Firmaron recientemente:</h3>
       <div id="lib-list" class="send-list"></div>
     </section>
 
