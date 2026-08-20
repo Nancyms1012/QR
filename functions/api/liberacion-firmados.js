@@ -1,4 +1,4 @@
-// GET /api/liberacion-firmados - Participants who signed the waiver
+// GET /api/liberacion-firmados - Participants who signed waiver but NOT yet registered
 export async function onRequestGet(context) {
   try {
     const { env } = context;
@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
 
     const result = participants
       .map((p, index) => ({ ...p, uid: index, checkin: checkinData[String(index)] }))
-      .filter(p => p.checkin && p.checkin.liberacion)
+      .filter(p => p.checkin && p.checkin.liberacion && !p.checkin.checkedIn)
       .map(p => ({
         ...p,
         liberacion: true,
