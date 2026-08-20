@@ -160,7 +160,7 @@ async function showCheckinModal(uid) {
         <div class="dorsal-big">#${currentParticipant.dorsal}</div>
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
         ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: ${currentParticipant.licencia}</div>` : ''}
-        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#FFBA31;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span>' : 'Socio: NO'}</div>` : ''}
+        ${currentParticipant.socio && currentParticipant.socio.toLowerCase() === 'si' ? `<div style="text-align:center;margin:0.4rem 0;"><span style="background:#FFBA31;color:white;padding:0.3rem 0.8rem;border-radius:6px;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span></div>` : '<div style="text-align:center;margin:0.4rem 0;">Socio: NO</div>'}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
         ${currentParticipant.equipo ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.95rem;font-weight:700;">🏆 Equipo: ${currentParticipant.equipo}</span></div>` : ''}
@@ -1536,7 +1536,7 @@ async function searchForRegistro() {
               <span>🏅 ${p.competencia || ''}</span>
               <span>🏷️ ${p.categoria || ''}</span>
               ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-              ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;padding:0.15rem 0.4rem;border-radius:4px;">✓ SOCIO</span>` : ''}
+              ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;padding:0.15rem 0.4rem;border-radius:4px;">✓ SOCIO</span>` : `<span>Socio: NO</span>`}
             </div>
           </div>
           <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.uid})" style="white-space:nowrap;">
