@@ -480,8 +480,8 @@ function getColorForParticipant(p) {
     if (comp.includes('trail') && (comp.includes('36') || comp.includes('35'))) return '#FF66CC';  // Rosado
     if (comp.includes('trail') && (comp.includes('24') || comp.includes('21'))) return '#6699FF';  // Azul
     if (comp.includes('trail') && (comp.includes('11') || comp.includes('12'))) return '#FFFF00';  // Amarillo
-    if (comp.includes('trail') && comp.includes('5.5')) return '#CCFF33';                           // Verde
-    if (comp.includes('trail') && comp.match(/\b5\b/)) return '#CCFF33';                            // Verde (5 km exacto)
+    if (comp.includes('trail') && comp.includes('5.5')) return '#92D050';                           // Verde
+    if (comp.includes('trail') && comp.match(/\b5\b/)) return '#92D050';                            // Verde (5 km exacto)
     if (comp.includes('aguas')) return '#e2e8f0';
     if (comp.includes('triatl') || comp.includes('sprint') || comp.includes('full') || comp.includes('relevo')) return '#e2e8f0';
   }
