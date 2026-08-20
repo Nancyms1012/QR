@@ -474,12 +474,12 @@ filterStatus.addEventListener('change', loadParticipantsList);
 
 async function loadParticipantsList() {
   try {
-    // If no competition selected, just load the filter options
-    if (!filterCompetition.value) {
+    // If no competition AND no status filter, show message
+    if (!filterCompetition.value && !filterStatus.value) {
       if (filterCompetition.options.length <= 1) {
         await loadFilterOptions();
       }
-      participantsList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">⬆️ Seleccioná una competencia para ver los participantes</p>';
+      participantsList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">⬆️ Seleccioná una competencia o un estado para ver los participantes</p>';
       return;
     }
 
@@ -491,10 +491,25 @@ async function loadParticipantsList() {
       return;
     }
 
-    // Filter by selected competition first
-    const compFiltered = participants.filter(p => p.competencia === filterCompetition.value);
+    // Populate competitions filter (once)
+    if (filterCompetition.options.length <= 1) {
+      const competitions = [...new Set(participants.map(p => p.competencia).filter(Boolean))].sort();
+      competitions.forEach(comp => {
+        const opt = document.createElement('option');
+        opt.value = comp;
+        opt.textContent = comp;
+        filterCompetition.appendChild(opt);
+      });
+    }
 
-    // Populate categories based on selected competition (only categories in this competition)
+    // Filter by selected competition first
+    let filtered = participants;
+    if (filterCompetition.value) {
+      filtered = filtered.filter(p => p.competencia === filterCompetition.value);
+    }
+
+    // Populate categories based on filtered results
+    const compFiltered = filtered;
     if (filterCategory.options.length <= 1) {
       const categories = [...new Set(compFiltered.map(p => p.categoria).filter(Boolean))].sort();
       categories.forEach(cat => {
@@ -505,10 +520,10 @@ async function loadParticipantsList() {
       });
     }
 
-    let filtered = compFiltered;
     if (filterCategory.value) {
       filtered = filtered.filter(p => p.categoria === filterCategory.value);
     }
+
     if (filterStatus.value === 'lib') {
       filtered = filtered.filter(p => p.liberacion);
     } else if (filterStatus.value === 'checked') {
