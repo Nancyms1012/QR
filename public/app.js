@@ -598,9 +598,13 @@ function getColorStyle(color) {
 
 function createParticipantCard(p) {
   const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
-  let statusIcon = '⏳';
-  if (p.checkedIn && p.kitRetirado) statusIcon = '✅📦';
-  else if (p.checkedIn) statusIcon = '✅';
+  let statusIcon = `
+    <div style="display:flex;flex-direction:column;gap:2px;align-items:center;font-size:0.75rem;">
+      <span style="opacity:${p.liberacion ? '1' : '0.3'};">✍️</span>
+      <span style="opacity:${p.checkedIn ? '1' : '0.3'};">✅</span>
+      <span style="opacity:${p.kitRetirado ? '1' : '0.3'};">📦</span>
+    </div>
+  `;
   
   const bgColor = getColorForParticipant(p);
   const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
