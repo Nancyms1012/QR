@@ -19,6 +19,7 @@ navButtons.forEach(btn => {
     if (viewId === 'kit') loadKitList();
     if (viewId === 'completados') loadCompletadosList();
     if (viewId === 'liberacion') loadLiberacionList();
+    if (viewId === 'registro') loadRegistroList();
     if (viewId === 'admin') initAdmin();
   });
 });
@@ -628,18 +629,22 @@ async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     const stats = await res.json();
+    const pctLib = stats.total > 0 ? Math.round((stats.liberacion / stats.total) * 100) : 0;
     const pctRegistro = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
     const pctKit = stats.total > 0 ? Math.round((stats.kitRetirado / stats.total) * 100) : 0;
 
     let competenciasHTML = '';
     for (const [comp, data] of Object.entries(stats.competencias || {})) {
+      const catPctL = data.total > 0 ? Math.round((data.liberacion / data.total) * 100) : 0;
       const catPctR = data.total > 0 ? Math.round((data.checkedIn / data.total) * 100) : 0;
       const catPctK = data.total > 0 ? Math.round((data.kitRetirado / data.total) * 100) : 0;
       competenciasHTML += `
         <div class="stat-card">
           <h3>${comp}</h3>
           <p style="font-size:0.85rem;color:var(--text-light);">Total: <strong>${data.total}</strong></p>
-          <p>✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
+          <p>✍️ Liberación: <strong>${data.liberacion}</strong> / ${data.total}</p>
+          <div class="progress-bar"><div class="progress-fill" style="width: ${catPctL}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
+          <p style="margin-top:0.4rem;">✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
           <div class="progress-bar"><div class="progress-fill" style="width: ${catPctR}%"></div></div>
           <p style="margin-top:0.4rem;">📦 Kit: <strong>${data.kitRetirado}</strong> / ${data.total}</p>
           <div class="progress-bar"><div class="progress-fill" style="width: ${catPctK}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div></div>
@@ -649,7 +654,13 @@ async function loadStats() {
 
     document.getElementById('stats-container').innerHTML = `
       <div class="stat-card">
-        <h3>✅ Check-in Registro</h3>
+        <h3>✍️ Liberación</h3>
+        <div class="stat-number">${stats.liberacion} / ${stats.total}</div>
+        <p style="color:var(--text-light)">${pctLib}% firmados · ${stats.pendingLiberacion} pendientes</p>
+        <div class="progress-bar"><div class="progress-fill" style="width: ${pctLib}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
+      </div>
+      <div class="stat-card">
+        <h3>✅ Registro</h3>
         <div class="stat-number">${stats.checkedIn} / ${stats.total}</div>
         <p style="color:var(--text-light)">${pctRegistro}% registrados · ${stats.pendingRegistro} pendientes</p>
         <div class="progress-bar"><div class="progress-fill" style="width: ${pctRegistro}%"></div></div>
@@ -1127,17 +1138,19 @@ function initAdmin() {
 // Module visibility
 const moduleScanner = document.getElementById('module-scanner');
 const moduleLiberacion = document.getElementById('module-liberacion');
+const moduleRegistro = document.getElementById('module-registro');
 const moduleQrcodes = document.getElementById('module-qrcodes');
 const moduleSend = document.getElementById('module-send');
 const moduleKit = document.getElementById('module-kit');
 const moduleCompletados = document.getElementById('module-completados');
 
 function loadModuleSettings() {
-  const defaults = { scanner: true, liberacion: true, qrcodes: true, send: true, kit: true, completados: true };
+  const defaults = { scanner: true, liberacion: true, registro: true, qrcodes: true, send: true, kit: true, completados: true };
   const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
   const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
   if (moduleLiberacion) moduleLiberacion.checked = settings.liberacion !== false;
+  if (moduleRegistro) moduleRegistro.checked = settings.registro !== false;
   if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
   if (moduleSend) moduleSend.checked = settings.send !== false;
   if (moduleKit) moduleKit.checked = settings.kit !== false;
@@ -1148,6 +1161,7 @@ function loadModuleSettings() {
 function applyModuleVisibility(settings) {
   const scannerTab = document.querySelector('[data-view="scanner"]');
   const liberacionTab = document.querySelector('[data-view="liberacion"]');
+  const registroTab = document.querySelector('[data-view="registro"]');
   const qrcodesTab = document.querySelector('[data-view="qrcodes"]');
   const sendTab = document.querySelector('[data-view="send"]');
   const kitTab = document.querySelector('[data-view="kit"]');
@@ -1155,6 +1169,7 @@ function applyModuleVisibility(settings) {
 
   if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
   if (liberacionTab) liberacionTab.style.display = settings.liberacion !== false ? '' : 'none';
+  if (registroTab) registroTab.style.display = settings.registro !== false ? '' : 'none';
   if (qrcodesTab) qrcodesTab.style.display = settings.qrcodes !== false ? '' : 'none';
   if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
   if (kitTab) kitTab.style.display = settings.kit !== false ? '' : 'none';
@@ -1165,6 +1180,7 @@ function saveModuleSettings() {
   const settings = {
     scanner: moduleScanner ? moduleScanner.checked : true,
     liberacion: moduleLiberacion ? moduleLiberacion.checked : true,
+    registro: moduleRegistro ? moduleRegistro.checked : true,
     qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
     send: moduleSend ? moduleSend.checked : true,
     kit: moduleKit ? moduleKit.checked : true,
@@ -1176,6 +1192,7 @@ function saveModuleSettings() {
 
 if (moduleScanner) moduleScanner.addEventListener('change', saveModuleSettings);
 if (moduleLiberacion) moduleLiberacion.addEventListener('change', saveModuleSettings);
+if (moduleRegistro) moduleRegistro.addEventListener('change', saveModuleSettings);
 if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
 if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
 if (moduleKit) moduleKit.addEventListener('change', saveModuleSettings);
@@ -1630,5 +1647,82 @@ async function marcarLiberacion(dorsal) {
     }
   } catch (err) {
     alert('Error al marcar liberación');
+  }
+}
+
+
+
+// ============ REGISTRO VIEW (Mesa 2) ============
+const regSearchInput = document.getElementById('reg-search-input');
+const regList = document.getElementById('reg-list');
+
+if (regSearchInput) regSearchInput.addEventListener('keyup', loadRegistroList);
+
+async function loadRegistroList() {
+  try {
+    const res = await fetch('/api/registro-pending');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) {
+      regList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+      return;
+    }
+
+    let filtered = participants;
+
+    // Apply search
+    if (regSearchInput && regSearchInput.value.trim()) {
+      const query = regSearchInput.value.trim().toLowerCase();
+      filtered = filtered.filter(p => {
+        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+      });
+    }
+
+    if (filtered.length === 0) {
+      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No hay participantes pendientes de registro</p>';
+      return;
+    }
+
+    regList.innerHTML = filtered.map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      return `
+        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})">
+          <div class="send-info" style="cursor:pointer;">
+            <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto">
+              <span>🏅 ${p.competencia || ''}</span>
+              <span>🏷️ ${p.categoria || ''}</span>
+              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.dorsal})" style="white-space:nowrap;">
+            ✅ Registrar
+          </button>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    regList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+  }
+}
+
+async function marcarRegistro(dorsal) {
+  try {
+    const res = await fetch(`/api/checkin/${dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'registro' })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      loadRegistroList();
+    } else {
+      alert(data.message || data.error);
+    }
+  } catch (err) {
+    alert('Error al marcar registro');
   }
 }
