@@ -159,9 +159,8 @@ async function showCheckinModal(uid) {
       <div style="${modalColorStyle}">
         <div class="dorsal-big">#${currentParticipant.dorsal}</div>
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
-        ${currentParticipant.id_participante ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">🆔 ${currentParticipant.id_participante}</div>` : ''}
         ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: ${currentParticipant.licencia}</div>` : ''}
-        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#16a34a;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span>' : 'Socio: NO'}</div>` : ''}
+        ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#FFBA31;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span>' : 'Socio: NO'}</div>` : ''}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
         ${currentParticipant.equipo ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.95rem;font-weight:700;">🏆 Equipo: ${currentParticipant.equipo}</span></div>` : ''}
@@ -509,12 +508,6 @@ function getColorStyle(color) {
 
 function createParticipantCard(p) {
   const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
-  let statusIcon = `
-    <div style="display:flex;flex-direction:column;gap:2px;align-items:center;font-size:0.75rem;">
-      <span style="opacity:${p.checkedIn ? '1' : '0.3'};">✅</span>
-      <span style="opacity:${p.kitRetirado ? '1' : '0.3'};">📦</span>
-    </div>
-  `;
   
   const bgColor = getColorForParticipant(p);
   const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
@@ -529,11 +522,10 @@ function createParticipantCard(p) {
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#16a34a;color:white;font-weight:700;">✓ SOCIO: SÍ</span>` : p.socio ? `<span>Socio: NO</span>` : ''}
+          ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;">✓ SOCIO: SÍ</span>` : p.socio ? `<span>Socio: NO</span>` : ''}
           ${p.equipo ? `<span style="background:#f59e0b;color:white;font-weight:700;">🏆 ${p.equipo}</span>` : ''}
         </div>
       </div>
-      <div class="participant-status">${statusIcon}</div>
     </div>
   `;
 }
@@ -1532,13 +1524,27 @@ async function searchForRegistro() {
       return;
     }
 
-    regSearchResults.innerHTML = filtered.slice(0, 10).map(p => createParticipantCard(p)).join('');
-    // Attach click listeners
-    regSearchResults.querySelectorAll('.participant-card').forEach(card => {
-      card.addEventListener('click', () => {
-        showCheckinModal(parseInt(card.dataset.uid));
-      });
-    });
+    regSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
+      const bgColor = getColorForParticipant(p);
+      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
+      return `
+        <div class="send-card" style="${cardStyle}">
+          <div class="send-info" onclick="showCheckinModal(${p.uid})" style="cursor:pointer;">
+            <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
+            <div class="nombre">${getDisplayName(p)}</div>
+            <div class="contacto">
+              <span>🏅 ${p.competencia || ''}</span>
+              <span>🏷️ ${p.categoria || ''}</span>
+              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+              ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:white;font-weight:700;padding:0.15rem 0.4rem;border-radius:4px;">✓ SOCIO</span>` : ''}
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.uid})" style="white-space:nowrap;">
+            ✅ Registrar
+          </button>
+        </div>
+      `;
+    }).join('');
   } catch (err) {
     regSearchResults.innerHTML = '';
   }
