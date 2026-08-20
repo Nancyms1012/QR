@@ -1706,12 +1706,11 @@ async function loadKidsCapacity() {
 async function registerKid() {
   const dorsal = document.getElementById('kids-dorsal').value.trim();
   const nombre = document.getElementById('kids-nombre').value.trim();
-  const apellidos = document.getElementById('kids-apellidos').value.trim();
   const fecha = document.getElementById('kids-fecha').value;
   const responsable = document.getElementById('kids-responsable').value.trim();
   const msgEl = document.getElementById('kids-message');
 
-  if (!dorsal || !nombre || !apellidos || !fecha || !responsable) {
+  if (!dorsal || !nombre || !fecha || !responsable) {
     msgEl.innerHTML = '<p style="color:#dc2626;">❌ Todos los campos son obligatorios</p>';
     return;
   }
@@ -1726,16 +1725,14 @@ async function registerKid() {
     const res = await fetch('/api/kids', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dorsal, nombre, apellidos, fechaNacimiento: fecha, categoria: cat.name, responsable })
+      body: JSON.stringify({ dorsal, nombre, apellidos: '', fechaNacimiento: fecha, categoria: cat.name, responsable })
     });
     const data = await res.json();
 
     if (res.ok) {
-      msgEl.innerHTML = `<p style="color:#16a34a;">✅ ${nombre} ${apellidos} inscrito en ${cat.name}</p>`;
-      // Clear form
+      msgEl.innerHTML = `<p style="color:#16a34a;">✅ ${nombre} inscrito en ${cat.name}</p>`;
       document.getElementById('kids-dorsal').value = '';
       document.getElementById('kids-nombre').value = '';
-      document.getElementById('kids-apellidos').value = '';
       document.getElementById('kids-fecha').value = '';
       document.getElementById('kids-responsable').value = '';
       kidsCategoriaDisplay.textContent = '';
@@ -1764,7 +1761,7 @@ async function loadKidsList() {
       <div class="send-card" style="border-left:4px solid var(--primary);">
         <div class="send-info">
           <span class="dorsal">#${k.dorsal}</span>
-          <div class="nombre">${k.nombre} ${k.apellidos}</div>
+          <div class="nombre">${k.nombre}${k.apellidos ? ' ' + k.apellidos : ''}</div>
           <div class="contacto">
             <span>🏷️ ${k.categoria}</span>
             <span>🎂 ${k.fechaNacimiento}</span>
