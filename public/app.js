@@ -168,6 +168,7 @@ async function showCheckinModal(dorsal) {
         ${currentParticipant.socio ? `<div style="text-align:center;margin:0.4rem 0;">${currentParticipant.socio.toLowerCase() === 'si' ? '<span style="color:#16a34a;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span>' : 'Socio: NO'}</div>` : ''}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
+        ${currentParticipant.equipo ? `<div style="text-align:center;margin-bottom:0.3rem;"><span style="background:#fef3c7;color:#92400e;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.95rem;font-weight:700;">🏆 Equipo: ${currentParticipant.equipo}</span></div>` : ''}
         ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem;margin:1rem 0;">
@@ -1315,6 +1316,7 @@ function parseCSV(text) {
     else if (h === 'ID' || h === 'ID_PARTICIPANTE') colMap.id_participante = i;
     else if (h === 'SOCIO') colMap.socio = i;
     else if (h === 'LICENCIA' || h === 'LICENSE') colMap.licencia = i;
+    else if (h === 'EQUIPO' || h === 'TEAM') colMap.equipo = i;
   });
 
   // Debug alert - remove after confirming it works
@@ -1347,6 +1349,7 @@ function parseCSV(text) {
     if (colMap.id_participante !== undefined) p.id_participante = cols[colMap.id_participante] || '';
     if (colMap.socio !== undefined) p.socio = cols[colMap.socio] || '';
     if (colMap.licencia !== undefined) p.licencia = cols[colMap.licencia] || '';
+    if (colMap.equipo !== undefined) p.equipo = cols[colMap.equipo] || '';
 
     if (p.dorsal && p.nombre) {
       participants.push(p);

@@ -45,7 +45,8 @@ export async function onRequestPost(context) {
         email: String(p.email || '').trim(),
         id_participante: String(p.id_participante || p.id || '').trim(),
         socio: String(p.socio || '').trim(),
-        licencia: String(p.licencia || '').trim()
+        licencia: String(p.licencia || '').trim(),
+        equipo: String(p.equipo || p.team || '').trim()
       });
     }
 
