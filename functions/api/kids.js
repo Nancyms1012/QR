@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const { dorsal, nombre, apellidos, fechaNacimiento, categoria, responsable } = body;
 
-    if (!dorsal || !nombre || !apellidos || !fechaNacimiento || !categoria || !responsable) {
+    if (!dorsal || !nombre || !fechaNacimiento || !categoria || !responsable) {
       return Response.json({ error: "Todos los campos son obligatorios" }, { status: 400 });
     }
 
