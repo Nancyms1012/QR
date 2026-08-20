@@ -36,11 +36,13 @@ export async function onRequestPost(context) {
       existing.checkInTime = new Date().toISOString();
       await env.CHECKIN_KV.put(`checkin:uid_${uid}`, JSON.stringify(existing));
 
-      // Add to kit-pending list
+      // Add to kit-pending list (only if not already there)
       const pendingRaw = await env.CHECKIN_KV.get("kit-pending-list");
       const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
-      pending.push({ ...participant, uid, checkedIn: true, checkInTime: existing.checkInTime, kitRetirado: false, kitRetiroTime: null });
-      await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(pending));
+      if (!pending.find(p => p.uid === uid)) {
+        pending.push({ ...participant, uid, checkedIn: true, checkInTime: existing.checkInTime, kitRetirado: false, kitRetiroTime: null });
+        await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(pending));
+      }
 
     } else if (stage === "kit") {
       if (!existing.checkedIn) {
