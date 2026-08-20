@@ -1481,11 +1481,9 @@ async function loadRegistroList() {
     }
 
     regList.innerHTML = participants.slice(0, 50).map(p => {
-      const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       const regTime = p.checkInTime ? new Date(p.checkInTime).toLocaleTimeString('es-CR') : '';
       return `
-        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.uid})">
+        <div class="send-card" style="border-left: 5px solid #FFBA31;" onclick="showCheckinModal(${p.uid})">
           <div class="send-info" style="cursor:pointer;">
             <span class="dorsal">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
