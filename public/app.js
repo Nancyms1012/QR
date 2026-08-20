@@ -184,8 +184,15 @@ async function showCheckinModal(dorsal) {
 
     const btnConfirmCheckin = document.getElementById('btn-confirm-checkin');
     const btnConfirmKit = document.getElementById('btn-confirm-kit');
+    const btnConfirmLiberacion = document.getElementById('btn-confirm-liberacion');
 
-    // Show/hide buttons based on status
+    // Liberación button: show only if not done
+    if (!isLib) {
+      btnConfirmLiberacion.classList.remove('hidden');
+    } else {
+      btnConfirmLiberacion.classList.add('hidden');
+    }
+
     // Registro only if liberacion done
     if (isLib && !isChecked) {
       btnConfirmCheckin.classList.remove('hidden');
@@ -211,6 +218,35 @@ async function showCheckinModal(dorsal) {
     alert('Participante no encontrado con dorsal: ' + dorsal);
   }
 }
+
+// Liberación button
+document.getElementById('btn-confirm-liberacion').addEventListener('click', async () => {
+  if (!currentParticipant) return;
+  try {
+    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'liberacion' })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      currentParticipant = data.participant;
+      showCheckinModal(currentParticipant.dorsal);
+
+      scanResult.classList.remove('hidden');
+      scanResult.className = 'result-card success';
+      scanResult.innerHTML = `
+        <h3>✍️ Liberación firmada</h3>
+        <p><strong>#${currentParticipant.dorsal}</strong> - ${getDisplayName(currentParticipant)}</p>
+      `;
+    } else {
+      alert(data.message || data.error);
+    }
+  } catch (err) {
+    alert('Error al marcar liberación');
+  }
+});
 
 btnConfirmCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
