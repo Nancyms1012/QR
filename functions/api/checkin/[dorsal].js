@@ -1,8 +1,8 @@
 // POST /api/checkin/:uid - Check in a participant by uid
-// Body: { stage: "liberacion" | "registro" | "kit" }
+// Body: { stage: "registro" | "kit" }
 export async function onRequestPost(context) {
   const { env, params, request } = context;
-  const uid = parseInt(params.dorsal); // reusing route param but it's uid
+  const uid = parseInt(params.dorsal);
 
   try {
     let stage = "registro";
@@ -21,7 +21,6 @@ export async function onRequestPost(context) {
       return Response.json({ error: "Participante no encontrado" }, { status: 404 });
     }
 
-    // Get existing check-in data for this uid
     const existing = await env.CHECKIN_KV.get(`checkin:uid_${uid}`, { type: "json" }) || {};
 
     if (stage === "registro") {
@@ -35,6 +34,13 @@ export async function onRequestPost(context) {
 
       existing.checkedIn = true;
       existing.checkInTime = new Date().toISOString();
+      await env.CHECKIN_KV.put(`checkin:uid_${uid}`, JSON.stringify(existing));
+
+      // Add to kit-pending list
+      const pendingRaw = await env.CHECKIN_KV.get("kit-pending-list");
+      const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+      pending.push({ ...participant, uid, checkedIn: true, checkInTime: existing.checkInTime, kitRetirado: false, kitRetiroTime: null });
+      await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(pending));
 
     } else if (stage === "kit") {
       if (!existing.checkedIn) {
@@ -55,9 +61,20 @@ export async function onRequestPost(context) {
 
       existing.kitRetirado = true;
       existing.kitRetiroTime = new Date().toISOString();
-    }
+      await env.CHECKIN_KV.put(`checkin:uid_${uid}`, JSON.stringify(existing));
 
-    await env.CHECKIN_KV.put(`checkin:uid_${uid}`, JSON.stringify(existing));
+      // Remove from kit-pending list
+      const pendingRaw = await env.CHECKIN_KV.get("kit-pending-list");
+      const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+      const updatedPending = pending.filter(p => p.uid !== uid);
+      await env.CHECKIN_KV.put("kit-pending-list", JSON.stringify(updatedPending));
+
+      // Add to completados list
+      const compRaw = await env.CHECKIN_KV.get("completados-list");
+      const completados = compRaw ? JSON.parse(compRaw) : [];
+      completados.push({ ...participant, uid, checkedIn: true, checkInTime: existing.checkInTime, kitRetirado: true, kitRetiroTime: existing.kitRetiroTime });
+      await env.CHECKIN_KV.put("completados-list", JSON.stringify(completados));
+    }
 
     const stageLabel = stage === "registro" ? "Check-in de registro" : "Retiro de kit";
 

@@ -1671,6 +1671,20 @@ const btnKidsExport = document.getElementById('btn-kids-export');
 if (btnKidsRegister) btnKidsRegister.addEventListener('click', registerKid);
 if (btnKidsExport) btnKidsExport.addEventListener('click', exportKids);
 
+const btnKidsClear = document.getElementById('btn-kids-clear');
+if (btnKidsClear) btnKidsClear.addEventListener('click', async () => {
+  if (!confirm('⚠️ ¿Borrar TODOS los registros de Kids? Esta acción no se puede deshacer.')) return;
+  try {
+    const res = await fetch('/api/kids/clear', { method: 'POST' });
+    if (res.ok) {
+      alert('✅ Todos los registros de Kids eliminados');
+      loadKidsView();
+    }
+  } catch (err) {
+    alert('Error al borrar');
+  }
+});
+
 async function loadKidsView() {
   await loadKidsCapacity();
   await loadKidsList();
@@ -1757,7 +1771,7 @@ async function loadKidsList() {
       return;
     }
 
-    listEl.innerHTML = kids.map(k => `
+    listEl.innerHTML = kids.map((k, i) => `
       <div class="send-card" style="border-left:4px solid var(--primary);">
         <div class="send-info">
           <span class="dorsal">#${k.dorsal}</span>
@@ -1768,10 +1782,62 @@ async function loadKidsList() {
             <span>👤 ${k.responsable}</span>
           </div>
         </div>
+        <div style="display:flex;gap:0.3rem;">
+          <button class="btn btn-primary" onclick="editKid(${i})" style="padding:0.3rem 0.5rem;font-size:0.75rem;">✏️</button>
+          <button class="btn btn-danger" onclick="deleteKid(${i})" style="padding:0.3rem 0.5rem;font-size:0.75rem;">🗑️</button>
+        </div>
       </div>
     `).join('');
   } catch (err) {
     listEl.innerHTML = '';
+  }
+}
+
+async function deleteKid(index) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  try {
+    const res = await fetch(`/api/kids/${index}`, { method: 'DELETE' });
+    if (res.ok) {
+      loadKidsView();
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Error al eliminar');
+    }
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
+
+async function editKid(index) {
+  try {
+    const res = await fetch('/api/kids');
+    const kids = await res.json();
+    if (!Array.isArray(kids) || !kids[index]) return;
+
+    const k = kids[index];
+    const newNombre = prompt('Nombre completo:', k.nombre + (k.apellidos ? ' ' + k.apellidos : ''));
+    if (newNombre === null) return;
+
+    const newDorsal = prompt('Dorsal:', k.dorsal);
+    if (newDorsal === null) return;
+
+    const newResponsable = prompt('Responsable:', k.responsable);
+    if (newResponsable === null) return;
+
+    const updateRes = await fetch(`/api/kids/${index}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: newNombre, dorsal: newDorsal, responsable: newResponsable })
+    });
+
+    if (updateRes.ok) {
+      loadKidsView();
+    } else {
+      const data = await updateRes.json();
+      alert(data.error || 'Error al actualizar');
+    }
+  } catch (err) {
+    alert('Error de conexión');
   }
 }
 
