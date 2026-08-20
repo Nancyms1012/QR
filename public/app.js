@@ -1528,24 +1528,18 @@ const regList = document.getElementById('reg-list');
 if (regSearchInput) regSearchInput.addEventListener('keyup', searchForRegistro);
 
 async function loadRegistroList() {
-  // Load recently registered
+  // Load those registered but kit pending (waiting for next step)
   try {
-    const res = await fetch('/api/participants');
+    const res = await fetch('/api/kit-pending');
     const participants = await res.json();
     if (!Array.isArray(participants)) return;
 
-    const registrados = participants.filter(p => p.checkedIn).sort((a, b) => {
-      const tA = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
-      const tB = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
-      return tB - tA;
-    });
-
-    if (registrados.length === 0) {
-      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">Aún no hay registros</p>';
+    if (participants.length === 0) {
+      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay registrados pendientes de kit</p>';
       return;
     }
 
-    regList.innerHTML = registrados.slice(0, 30).map(p => {
+    regList.innerHTML = participants.slice(0, 50).map(p => {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       const regTime = p.checkInTime ? new Date(p.checkInTime).toLocaleTimeString('es-CR') : '';
