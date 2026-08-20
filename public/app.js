@@ -1483,7 +1483,7 @@ async function loadRegistroList() {
     regList.innerHTML = participants.slice(0, 50).map(p => {
       const regTime = p.checkInTime ? new Date(p.checkInTime).toLocaleTimeString('es-CR') : '';
       return `
-        <div class="send-card" style="border-left: 5px solid #FFBA31;" onclick="showCheckinModal(${p.uid})">
+        <div class="send-card" style="border-left: 5px solid #CCFF33;" onclick="showCheckinModal(${p.uid})">
           <div class="send-info" style="cursor:pointer;">
             <span class="dorsal">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
