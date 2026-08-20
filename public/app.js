@@ -178,20 +178,12 @@ async function showCheckinModal(uid) {
     `;
 
     const btnConfirmCheckin = document.getElementById('btn-confirm-checkin');
-    const btnConfirmKit = document.getElementById('btn-confirm-kit');
 
     // Registro button: show if not checked in
     if (!isChecked) {
       btnConfirmCheckin.classList.remove('hidden');
     } else {
       btnConfirmCheckin.classList.add('hidden');
-    }
-
-    // Kit button only available if registro is done
-    if (isChecked && !isKit) {
-      btnConfirmKit.classList.remove('hidden');
-    } else {
-      btnConfirmKit.classList.add('hidden');
     }
 
     if (isChecked || isKit) {
@@ -235,36 +227,6 @@ btnConfirmCheckin.addEventListener('click', async () => {
   }
 });
 
-// Kit pickup check-in
-const btnConfirmKit = document.getElementById('btn-confirm-kit');
-btnConfirmKit.addEventListener('click', async () => {
-  if (!currentParticipant) return;
-  try {
-    const res = await fetch(`/api/checkin/${currentParticipant.uid}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage: 'kit' })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.uid);
-
-      scanResult.classList.remove('hidden');
-      scanResult.className = 'result-card success';
-      scanResult.innerHTML = `
-        <h3>📦 Kit entregado</h3>
-        <p><strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre}</p>
-        <p style="color:#64748b">${currentParticipant.categoria}</p>
-      `;
-    } else {
-      alert(data.message || data.error);
-    }
-  } catch (err) {
-    alert('Error al registrar retiro de kit');
-  }
-});
 
 btnUndoCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
@@ -306,17 +268,7 @@ btnEditContact.addEventListener('click', () => {
   document.getElementById('edit-participant-info').innerHTML = `
     <strong>#${currentParticipant.dorsal}</strong> - ${currentParticipant.nombre || ''} ${currentParticipant.apellidos || ''}
   `;
-  document.getElementById('edit-nombre').value = currentParticipant.nombre || '';
-  document.getElementById('edit-apellidos').value = currentParticipant.apellidos || '';
-  document.getElementById('edit-genero').value = currentParticipant.genero || '';
-  document.getElementById('edit-categoria').value = currentParticipant.categoria || '';
-  document.getElementById('edit-competencia').value = currentParticipant.competencia || '';
   document.getElementById('edit-talla').value = currentParticipant.talla || '';
-  editTelefono.value = currentParticipant.telefono || '';
-  editEmail.value = currentParticipant.email || '';
-  document.getElementById('edit-id-participante').value = currentParticipant.id_participante || '';
-  document.getElementById('edit-socio').value = currentParticipant.socio || '';
-  document.getElementById('edit-licencia').value = currentParticipant.licencia || '';
   modal.classList.add('hidden');
   editModal.classList.remove('hidden');
 });
@@ -337,30 +289,20 @@ editModal.addEventListener('click', (e) => {
 btnSaveContact.addEventListener('click', async () => {
   if (!currentParticipant) return;
 
-  const nombre = document.getElementById('edit-nombre').value.trim();
-  const apellidos = document.getElementById('edit-apellidos').value.trim();
-  const genero = document.getElementById('edit-genero').value.trim();
-  const categoria = document.getElementById('edit-categoria').value.trim();
-  const competencia = document.getElementById('edit-competencia').value.trim();
   const talla = document.getElementById('edit-talla').value.trim();
-  const telefono = editTelefono.value.trim();
-  const email = editEmail.value.trim();
-  const id_participante = document.getElementById('edit-id-participante').value.trim();
-  const socio = document.getElementById('edit-socio').value.trim();
-  const licencia = document.getElementById('edit-licencia').value.trim();
 
   try {
     const res = await fetch(`/api/participants/${currentParticipant.uid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia })
+      body: JSON.stringify({ talla })
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert(`✅ Datos actualizados`);
-      Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia });
+      alert(`✅ Talla actualizada`);
+      currentParticipant.talla = talla;
       editModal.classList.add('hidden');
       showCheckinModal(currentParticipant.uid);
     } else {

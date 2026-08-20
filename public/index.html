@@ -265,7 +265,6 @@
       <div id="modal-body"></div>
       <div class="modal-actions">
         <button id="btn-confirm-checkin" class="btn btn-success">✅ Check-in Registro</button>
-        <button id="btn-confirm-kit" class="btn btn-primary">📦 Retiro de Kit</button>
         <button id="btn-undo-checkin" class="btn btn-warning hidden">↩️ Revertir</button>
         <button id="btn-edit-contact" class="btn btn-primary">✏️ Editar</button>
         <button id="btn-close-modal" class="btn btn-secondary">Cerrar</button>
@@ -276,37 +275,9 @@
   <!-- EDIT CONTACT MODAL -->
   <div id="edit-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 style="text-align:center;margin-bottom:1rem;">✏️ Editar Participante</h3>
+      <h3 style="text-align:center;margin-bottom:1rem;">✏️ Editar Talla</h3>
       <div id="edit-participant-info" style="text-align:center;margin-bottom:1rem;"></div>
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
-        <label style="font-size:0.85rem;color:#64748b;">👤 Nombre</label>
-        <input type="text" id="edit-nombre" placeholder="Nombre" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">👤 Apellidos</label>
-        <input type="text" id="edit-apellidos" placeholder="Apellidos" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">⚧️ Género</label>
-        <select id="edit-genero" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-          <option value="">-- Seleccionar --</option>
-          <option value="Masculino">Masculino</option>
-          <option value="Femenino">Femenino</option>
-        </select>
-        <label style="font-size:0.85rem;color:#64748b;">🏷️ Categoría</label>
-        <select id="edit-categoria" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-          <option value="">-- Seleccionar --</option>
-          <option value="Open Masculino">Open Masculino</option>
-          <option value="Open Femenino">Open Femenino</option>
-          <option value="Máster A Masculino">Máster A Masculino</option>
-          <option value="Máster A Femenino">Máster A Femenino</option>
-          <option value="Máster B Masculino">Máster B Masculino</option>
-          <option value="Máster B Femenino">Máster B Femenino</option>
-          <option value="Máster C Masculino">Máster C Masculino</option>
-          <option value="Máster C Femenino">Máster C Femenino</option>
-          <option value="Máster D Masculino">Máster D Masculino</option>
-          <option value="Máster D Femenino">Máster D Femenino</option>
-          <option value="Máster E Masculino">Máster E Masculino</option>
-          <option value="Máster E Femenino">Máster E Femenino</option>
-        </select>
-        <label style="font-size:0.85rem;color:#64748b;">🏅 Competencia</label>
-        <input type="text" id="edit-competencia" placeholder="Ej: Sprint, Olímpico, Full" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
         <label style="font-size:0.85rem;color:#64748b;">👕 Talla Jersey</label>
         <select id="edit-talla" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
           <option value="">-- Sin asignar --</option>
@@ -316,17 +287,8 @@
           <option value="L">L</option>
           <option value="XL">XL</option>
           <option value="XXL">XXL</option>
+          <option value="2XL">2XL</option>
         </select>
-        <label style="font-size:0.85rem;color:#64748b;">📱 Teléfono</label>
-        <input type="tel" id="edit-telefono" placeholder="50688881234" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">📧 Email</label>
-        <input type="email" id="edit-email" placeholder="correo@ejemplo.com" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">🆔 ID</label>
-        <input type="text" id="edit-id-participante" placeholder="ID del participante" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">🤝 Socio</label>
-        <input type="text" id="edit-socio" placeholder="Socio" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
-        <label style="font-size:0.85rem;color:#64748b;">📜 Licencia</label>
-        <input type="text" id="edit-licencia" placeholder="Licencia" style="padding:0.7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;">
       </div>
       <div class="modal-actions" style="margin-top:1.5rem;">
         <button id="btn-save-contact" class="btn btn-success">💾 Guardar</button>
