@@ -12,12 +12,11 @@
   <header>
     <img src="/logo-xterra.png" alt="XTERRA CR" style="max-width:180px;height:auto;margin-bottom:0.3rem;border-radius:4px;mix-blend-mode:multiply;">
     <nav>
-      <button class="nav-btn active" data-view="manual">🔍 Buscar</button>
+      <button class="nav-btn" data-view="manual">🔍 Buscar</button>
+      <button class="nav-btn active" data-view="registro">✅ Registro</button>
+      <button class="nav-btn" data-view="kit">📦 Entrega Kit</button>
       <button class="nav-btn" data-view="list">📋 Lista</button>
       <button class="nav-btn" data-view="stats">📊 Stats</button>
-      <button class="nav-btn" data-view="liberacion">✍️ Liberación</button>
-      <button class="nav-btn" data-view="registro">✅ Registro</button>
-      <button class="nav-btn" data-view="kit">📦 Entrega Kit</button>
       <button class="nav-btn" data-view="completados">✅ Completados</button>
       <button class="nav-btn" data-view="scanner">📷 Escáner</button>
       <button class="nav-btn" data-view="qrcodes">🏷️ QR Codes</button>
@@ -45,7 +44,7 @@
     </section>
 
     <!-- MANUAL SEARCH VIEW -->
-    <section id="view-manual" class="view active">
+    <section id="view-manual" class="view">
       <h2>Búsqueda Manual</h2>
       <div class="search-box">
         <input type="text" id="search-input" placeholder="Buscar por dorsal o nombre..." autocomplete="off">
@@ -54,25 +53,15 @@
       <div id="search-results"></div>
     </section>
 
-    <!-- LIBERACION VIEW -->
-    <section id="view-liberacion" class="view">
-      <h2>✍️ Liberación de Responsabilidad</h2>
-      <p class="hint">Buscá al participante y marcá que firmó. Sin esto no podrá pasar a registro.</p>
-      <div class="search-box">
-        <input type="text" id="lib-search-input" placeholder="🔍 Buscar por dorsal o nombre para marcar firma..." autocomplete="off">
-      </div>
-      <div id="lib-search-results"></div>
-      <h3 style="margin-top:1.5rem;font-size:1rem;color:var(--text-light);">✅ Firmaron recientemente:</h3>
-      <div id="lib-list" class="send-list"></div>
-    </section>
-
-    <!-- REGISTRO VIEW (Mesa 2) -->
-    <section id="view-registro" class="view">
+    <!-- REGISTRO VIEW -->
+    <section id="view-registro" class="view active">
       <h2>✅ Registro</h2>
-      <p class="hint">Participantes que ya firmaron liberación y están pendientes de registro. Aparecen en orden de llegada.</p>
+      <p class="hint">Buscá al participante por dorsal o nombre para hacer el check-in de registro.</p>
       <div class="search-box">
         <input type="text" id="reg-search-input" placeholder="🔍 Buscar por dorsal o nombre..." autocomplete="off">
       </div>
+      <div id="reg-search-results"></div>
+      <h3 style="margin-top:1.5rem;font-size:1rem;color:var(--text-light);">✅ Registrados recientemente:</h3>
       <div id="reg-list" class="send-list"></div>
     </section>
 
@@ -88,10 +77,9 @@
         </select>
         <select id="filter-status">
           <option value="">Todos</option>
-          <option value="lib">✍️ Firmaron liberación</option>
           <option value="checked">✅ Registrados</option>
           <option value="kit">📦 Kit retirado</option>
-          <option value="complete">✅📦 Completados (3 pasos)</option>
+          <option value="complete">✅📦 Completados (ambos pasos)</option>
           <option value="pending">⏳ Sin ningún check</option>
         </select>
       </div>
@@ -175,9 +163,6 @@
             <input type="checkbox" id="module-scanner" style="width:18px;height:18px;cursor:pointer;"> 📷 Escáner QR
           </label>
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
-            <input type="checkbox" id="module-liberacion" style="width:18px;height:18px;cursor:pointer;"> ✍️ Liberación
-          </label>
-          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
             <input type="checkbox" id="module-registro" style="width:18px;height:18px;cursor:pointer;"> ✅ Registro
           </label>
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.95rem;cursor:pointer;">
@@ -239,7 +224,6 @@
     <div class="modal-content">
       <div id="modal-body"></div>
       <div class="modal-actions">
-        <button id="btn-confirm-liberacion" class="btn btn-warning">✍️ Liberación</button>
         <button id="btn-confirm-checkin" class="btn btn-success">✅ Check-in Registro</button>
         <button id="btn-confirm-kit" class="btn btn-primary">📦 Retiro de Kit</button>
         <button id="btn-undo-checkin" class="btn btn-warning hidden">↩️ Revertir</button>

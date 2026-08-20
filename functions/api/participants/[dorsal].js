@@ -25,8 +25,6 @@ export async function onRequestGet(context) {
     return Response.json({
       ...participant,
       uid: uid,
-      liberacion: Boolean(checkin.liberacion),
-      liberacionTime: checkin.liberacionTime || null,
       checkedIn: Boolean(checkin.checkedIn),
       checkInTime: checkin.checkInTime || null,
       kitRetirado: Boolean(checkin.kitRetirado),

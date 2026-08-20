@@ -1,7 +1,7 @@
 // ============ NAVIGATION ============
 const navButtons = document.querySelectorAll('.nav-btn');
 const views = document.querySelectorAll('.view');
-let currentView = 'manual';
+let currentView = 'registro';
 
 navButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -18,7 +18,6 @@ navButtons.forEach(btn => {
     if (viewId === 'send') loadSendList();
     if (viewId === 'kit') loadKitList();
     if (viewId === 'completados') loadCompletadosList();
-    if (viewId === 'liberacion') loadLiberacionList();
     if (viewId === 'registro') loadRegistroList();
     if (viewId === 'admin') initAdmin();
   });
@@ -145,15 +144,11 @@ async function showCheckinModal(uid) {
 
     const isChecked = currentParticipant.checkedIn;
     const isKit = currentParticipant.kitRetirado;
-    const isLib = currentParticipant.liberacion;
     const checkTime = currentParticipant.checkInTime
       ? new Date(currentParticipant.checkInTime).toLocaleString('es-CR')
       : '';
     const kitTime = currentParticipant.kitRetiroTime
       ? new Date(currentParticipant.kitRetiroTime).toLocaleString('es-CR')
-      : '';
-    const libTime = currentParticipant.liberacionTime
-      ? new Date(currentParticipant.liberacionTime).toLocaleString('es-CR')
       : '';
 
     const bgColor = getColorForParticipant(currentParticipant);
@@ -172,9 +167,6 @@ async function showCheckinModal(uid) {
         ${currentParticipant.talla ? `<div style="text-align:center;margin-bottom:0.5rem;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.85rem;font-weight:600;">👕 Talla: ${currentParticipant.talla}</span></div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:0.4rem;margin:1rem 0;">
-        <div class="status-badge ${isLib ? 'checked' : 'pending'}">
-          ${isLib ? `✍️ Liberación: ${libTime}` : '⏳ Liberación: Pendiente'}
-        </div>
         <div class="status-badge ${isChecked ? 'checked' : 'pending'}">
           ${isChecked ? `✅ Registro: ${checkTime}` : '⏳ Registro: Pendiente'}
         </div>
@@ -186,17 +178,9 @@ async function showCheckinModal(uid) {
 
     const btnConfirmCheckin = document.getElementById('btn-confirm-checkin');
     const btnConfirmKit = document.getElementById('btn-confirm-kit');
-    const btnConfirmLiberacion = document.getElementById('btn-confirm-liberacion');
 
-    // Liberación button: show only if not done
-    if (!isLib) {
-      btnConfirmLiberacion.classList.remove('hidden');
-    } else {
-      btnConfirmLiberacion.classList.add('hidden');
-    }
-
-    // Registro only if liberacion done
-    if (isLib && !isChecked) {
+    // Registro button: show if not checked in
+    if (!isChecked) {
       btnConfirmCheckin.classList.remove('hidden');
     } else {
       btnConfirmCheckin.classList.add('hidden');
@@ -209,7 +193,7 @@ async function showCheckinModal(uid) {
       btnConfirmKit.classList.add('hidden');
     }
 
-    if (isLib || isChecked || isKit) {
+    if (isChecked || isKit) {
       btnUndoCheckin.classList.remove('hidden');
     } else {
       btnUndoCheckin.classList.add('hidden');
@@ -220,35 +204,6 @@ async function showCheckinModal(uid) {
     alert('Participante no encontrado');
   }
 }
-
-// Liberación button
-document.getElementById('btn-confirm-liberacion').addEventListener('click', async () => {
-  if (!currentParticipant) return;
-  try {
-    const res = await fetch(`/api/checkin/${currentParticipant.uid}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage: 'liberacion' })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.uid);
-
-      scanResult.classList.remove('hidden');
-      scanResult.className = 'result-card success';
-      scanResult.innerHTML = `
-        <h3>✍️ Liberación firmada</h3>
-        <p><strong>#${currentParticipant.dorsal}</strong> - ${getDisplayName(currentParticipant)}</p>
-      `;
-    } else {
-      alert(data.message || data.error);
-    }
-  } catch (err) {
-    alert('Error al marcar liberación');
-  }
-});
 
 btnConfirmCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
@@ -524,16 +479,14 @@ async function loadParticipantsList() {
       filtered = filtered.filter(p => p.categoria === filterCategory.value);
     }
 
-    if (filterStatus.value === 'lib') {
-      filtered = filtered.filter(p => p.liberacion);
-    } else if (filterStatus.value === 'checked') {
+    if (filterStatus.value === 'checked') {
       filtered = filtered.filter(p => p.checkedIn);
     } else if (filterStatus.value === 'kit') {
       filtered = filtered.filter(p => p.kitRetirado);
     } else if (filterStatus.value === 'complete') {
-      filtered = filtered.filter(p => p.liberacion && p.checkedIn && p.kitRetirado);
+      filtered = filtered.filter(p => p.checkedIn && p.kitRetirado);
     } else if (filterStatus.value === 'pending') {
-      filtered = filtered.filter(p => !p.liberacion && !p.checkedIn && !p.kitRetirado);
+      filtered = filtered.filter(p => !p.checkedIn && !p.kitRetirado);
     }
 
     filtered.sort((a, b) => a.dorsal - b.dorsal);
@@ -615,7 +568,6 @@ function createParticipantCard(p) {
   const statusClass = p.kitRetirado ? 'checked' : (p.checkedIn ? 'checked' : 'pending');
   let statusIcon = `
     <div style="display:flex;flex-direction:column;gap:2px;align-items:center;font-size:0.75rem;">
-      <span style="opacity:${p.liberacion ? '1' : '0.3'};">✍️</span>
       <span style="opacity:${p.checkedIn ? '1' : '0.3'};">✅</span>
       <span style="opacity:${p.kitRetirado ? '1' : '0.3'};">📦</span>
     </div>
@@ -656,22 +608,18 @@ async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     const stats = await res.json();
-    const pctLib = stats.total > 0 ? Math.round((stats.liberacion / stats.total) * 100) : 0;
     const pctRegistro = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
     const pctKit = stats.total > 0 ? Math.round((stats.kitRetirado / stats.total) * 100) : 0;
 
     let competenciasHTML = '';
     for (const [comp, data] of Object.entries(stats.competencias || {})) {
-      const catPctL = data.total > 0 ? Math.round((data.liberacion / data.total) * 100) : 0;
       const catPctR = data.total > 0 ? Math.round((data.checkedIn / data.total) * 100) : 0;
       const catPctK = data.total > 0 ? Math.round((data.kitRetirado / data.total) * 100) : 0;
       competenciasHTML += `
         <div class="stat-card">
           <h3>${comp}</h3>
           <p style="font-size:0.85rem;color:var(--text-light);">Total: <strong>${data.total}</strong></p>
-          <p>✍️ Liberación: <strong>${data.liberacion}</strong> / ${data.total}</p>
-          <div class="progress-bar"><div class="progress-fill" style="width: ${catPctL}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
-          <p style="margin-top:0.4rem;">✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
+          <p>✅ Registro: <strong>${data.checkedIn}</strong> / ${data.total}</p>
           <div class="progress-bar"><div class="progress-fill" style="width: ${catPctR}%"></div></div>
           <p style="margin-top:0.4rem;">📦 Kit: <strong>${data.kitRetirado}</strong> / ${data.total}</p>
           <div class="progress-bar"><div class="progress-fill" style="width: ${catPctK}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div></div>
@@ -680,12 +628,6 @@ async function loadStats() {
     }
 
     document.getElementById('stats-container').innerHTML = `
-      <div class="stat-card">
-        <h3>✍️ Liberación</h3>
-        <div class="stat-number">${stats.liberacion} / ${stats.total}</div>
-        <p style="color:var(--text-light)">${pctLib}% firmados · ${stats.pendingLiberacion} pendientes</p>
-        <div class="progress-bar"><div class="progress-fill" style="width: ${pctLib}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
-      </div>
       <div class="stat-card">
         <h3>✅ Registro</h3>
         <div class="stat-number">${stats.checkedIn} / ${stats.total}</div>
@@ -1164,7 +1106,6 @@ function initAdmin() {
 
 // Module visibility
 const moduleScanner = document.getElementById('module-scanner');
-const moduleLiberacion = document.getElementById('module-liberacion');
 const moduleRegistro = document.getElementById('module-registro');
 const moduleQrcodes = document.getElementById('module-qrcodes');
 const moduleSend = document.getElementById('module-send');
@@ -1172,11 +1113,10 @@ const moduleKit = document.getElementById('module-kit');
 const moduleCompletados = document.getElementById('module-completados');
 
 function loadModuleSettings() {
-  const defaults = { scanner: true, liberacion: true, registro: true, qrcodes: true, send: true, kit: true, completados: true };
+  const defaults = { scanner: true, registro: true, qrcodes: true, send: true, kit: true, completados: true };
   const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
   const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
-  if (moduleLiberacion) moduleLiberacion.checked = settings.liberacion !== false;
   if (moduleRegistro) moduleRegistro.checked = settings.registro !== false;
   if (moduleQrcodes) moduleQrcodes.checked = settings.qrcodes !== false;
   if (moduleSend) moduleSend.checked = settings.send !== false;
@@ -1187,7 +1127,6 @@ function loadModuleSettings() {
 
 function applyModuleVisibility(settings) {
   const scannerTab = document.querySelector('[data-view="scanner"]');
-  const liberacionTab = document.querySelector('[data-view="liberacion"]');
   const registroTab = document.querySelector('[data-view="registro"]');
   const qrcodesTab = document.querySelector('[data-view="qrcodes"]');
   const sendTab = document.querySelector('[data-view="send"]');
@@ -1195,7 +1134,6 @@ function applyModuleVisibility(settings) {
   const completadosTab = document.querySelector('[data-view="completados"]');
 
   if (scannerTab) scannerTab.style.display = settings.scanner !== false ? '' : 'none';
-  if (liberacionTab) liberacionTab.style.display = settings.liberacion !== false ? '' : 'none';
   if (registroTab) registroTab.style.display = settings.registro !== false ? '' : 'none';
   if (qrcodesTab) qrcodesTab.style.display = settings.qrcodes !== false ? '' : 'none';
   if (sendTab) sendTab.style.display = settings.send !== false ? '' : 'none';
@@ -1206,7 +1144,6 @@ function applyModuleVisibility(settings) {
 function saveModuleSettings() {
   const settings = {
     scanner: moduleScanner ? moduleScanner.checked : true,
-    liberacion: moduleLiberacion ? moduleLiberacion.checked : true,
     registro: moduleRegistro ? moduleRegistro.checked : true,
     qrcodes: moduleQrcodes ? moduleQrcodes.checked : true,
     send: moduleSend ? moduleSend.checked : true,
@@ -1218,7 +1155,6 @@ function saveModuleSettings() {
 }
 
 if (moduleScanner) moduleScanner.addEventListener('change', saveModuleSettings);
-if (moduleLiberacion) moduleLiberacion.addEventListener('change', saveModuleSettings);
 if (moduleRegistro) moduleRegistro.addEventListener('change', saveModuleSettings);
 if (moduleQrcodes) moduleQrcodes.addEventListener('change', saveModuleSettings);
 if (moduleSend) moduleSend.addEventListener('change', saveModuleSettings);
@@ -1584,49 +1520,55 @@ async function loadCompletadosList() {
 
 
 
-// ============ LIBERACION VIEW ============
-const libSearchInput = document.getElementById('lib-search-input');
-const libSearchResults = document.getElementById('lib-search-results');
-const libList = document.getElementById('lib-list');
+// ============ REGISTRO VIEW ============
+const regSearchInput = document.getElementById('reg-search-input');
+const regSearchResults = document.getElementById('reg-search-results');
+const regList = document.getElementById('reg-list');
 
-if (libSearchInput) libSearchInput.addEventListener('keyup', searchForLiberacion);
+if (regSearchInput) regSearchInput.addEventListener('keyup', searchForRegistro);
 
-async function loadLiberacionList() {
-  // Load the list of recently signed
+async function loadRegistroList() {
+  // Load recently registered
   try {
-    const res = await fetch('/api/liberacion-firmados');
-    const firmados = await res.json();
-    if (!Array.isArray(firmados)) return;
+    const res = await fetch('/api/participants');
+    const participants = await res.json();
+    if (!Array.isArray(participants)) return;
 
-    if (firmados.length === 0) {
-      libList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">Aún no hay firmas registradas</p>';
+    const registrados = participants.filter(p => p.checkedIn).sort((a, b) => {
+      const tA = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
+      const tB = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
+      return tB - tA;
+    });
+
+    if (registrados.length === 0) {
+      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">Aún no hay registros</p>';
       return;
     }
 
-    libList.innerHTML = firmados.slice(0, 50).map(p => {
+    regList.innerHTML = registrados.slice(0, 30).map(p => {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
-      const libTime = p.liberacionTime ? new Date(p.liberacionTime).toLocaleTimeString('es-CR') : '';
+      const regTime = p.checkInTime ? new Date(p.checkInTime).toLocaleTimeString('es-CR') : '';
       return `
         <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.uid})">
           <div class="send-info" style="cursor:pointer;">
             <span class="dorsal">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
-            <div class="contacto"><span>✍️ ${libTime}</span> <span>🏅 ${p.competencia || ''}</span></div>
+            <div class="contacto"><span>✅ ${regTime}</span> <span>🏅 ${p.competencia || ''}</span></div>
           </div>
           <div class="participant-status">✅</div>
         </div>
       `;
     }).join('');
   } catch (err) {
-    libList.innerHTML = '';
+    regList.innerHTML = '';
   }
 }
 
-async function searchForLiberacion() {
-  const query = libSearchInput.value.trim().toLowerCase();
+async function searchForRegistro() {
+  const query = regSearchInput.value.trim().toLowerCase();
   if (!query || query.length < 1) {
-    libSearchResults.innerHTML = '';
+    regSearchResults.innerHTML = '';
     return;
   }
 
@@ -1635,19 +1577,19 @@ async function searchForLiberacion() {
     const participants = await res.json();
     if (!Array.isArray(participants)) return;
 
-    // Filter: search and only show those WITHOUT liberacion
-    let filtered = participants.filter(p => !p.liberacion);
+    // Show those NOT yet registered that match the search
+    let filtered = participants.filter(p => !p.checkedIn);
     filtered = filtered.filter(p => {
       if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
       return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
     });
 
     if (filtered.length === 0) {
-      libSearchResults.innerHTML = '<p style="color:#64748b;padding:0.5rem;">No se encontraron pendientes</p>';
+      regSearchResults.innerHTML = '<p style="color:#64748b;padding:0.5rem;">No se encontraron pendientes</p>';
       return;
     }
 
-    libSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
+    regSearchResults.innerHTML = filtered.slice(0, 10).map(p => {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       return `
@@ -1660,85 +1602,6 @@ async function searchForLiberacion() {
               <span>🏷️ ${p.categoria || ''}</span>
             </div>
           </div>
-          <button class="btn btn-success" onclick="event.stopPropagation(); marcarLiberacion(${p.uid})" style="white-space:nowrap;">
-            ✍️ Firmó
-          </button>
-        </div>
-      `;
-    }).join('');
-  } catch (err) {
-    libSearchResults.innerHTML = '';
-  }
-}
-
-async function marcarLiberacion(uid) {
-  try {
-    const res = await fetch(`/api/checkin/${uid}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage: 'liberacion' })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      libSearchInput.value = '';
-      libSearchResults.innerHTML = '';
-      loadLiberacionList();
-    } else {
-      alert(data.message || data.error);
-    }
-  } catch (err) {
-    alert('Error al marcar liberación');
-  }
-}
-
-
-
-// ============ REGISTRO VIEW (Mesa 2) ============
-const regSearchInput = document.getElementById('reg-search-input');
-const regList = document.getElementById('reg-list');
-
-if (regSearchInput) regSearchInput.addEventListener('keyup', loadRegistroList);
-
-async function loadRegistroList() {
-  try {
-    const res = await fetch('/api/registro-pending');
-    const participants = await res.json();
-    if (!Array.isArray(participants)) {
-      regList.innerHTML = '<p style="color:red;">Error al cargar</p>';
-      return;
-    }
-
-    let filtered = participants;
-
-    // Apply search
-    if (regSearchInput && regSearchInput.value.trim()) {
-      const query = regSearchInput.value.trim().toLowerCase();
-      filtered = filtered.filter(p => {
-        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
-        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
-      });
-    }
-
-    if (filtered.length === 0) {
-      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No hay participantes pendientes de registro</p>';
-      return;
-    }
-
-    regList.innerHTML = filtered.map(p => {
-      const bgColor = getColorForParticipant(p);
-      const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
-      return `
-        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.uid})">
-          <div class="send-info" style="cursor:pointer;">
-            <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
-            <div class="nombre">${getDisplayName(p)}</div>
-            <div class="contacto">
-              <span>🏅 ${p.competencia || ''}</span>
-              <span>🏷️ ${p.categoria || ''}</span>
-              ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-            </div>
-          </div>
           <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.uid})" style="white-space:nowrap;">
             ✅ Registrar
           </button>
@@ -1746,7 +1609,7 @@ async function loadRegistroList() {
       `;
     }).join('');
   } catch (err) {
-    regList.innerHTML = '<p style="color:red;">Error al cargar</p>';
+    regSearchResults.innerHTML = '';
   }
 }
 
@@ -1760,6 +1623,8 @@ async function marcarRegistro(uid) {
     const data = await res.json();
 
     if (res.ok) {
+      regSearchInput.value = '';
+      regSearchResults.innerHTML = '';
       loadRegistroList();
     } else {
       alert(data.message || data.error);

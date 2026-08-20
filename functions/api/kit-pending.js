@@ -24,8 +24,6 @@ export async function onRequestGet(context) {
       .filter(p => p.checkin && p.checkin.checkedIn && !p.checkin.kitRetirado)
       .map(p => ({
         ...p,
-        liberacion: true,
-        liberacionTime: p.checkin.liberacionTime,
         checkedIn: true,
         checkInTime: p.checkin.checkInTime,
         kitRetirado: false,

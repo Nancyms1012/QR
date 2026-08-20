@@ -24,27 +24,7 @@ export async function onRequestPost(context) {
     // Get existing check-in data for this uid
     const existing = await env.CHECKIN_KV.get(`checkin:uid_${uid}`, { type: "json" }) || {};
 
-    if (stage === "liberacion") {
-      if (existing.liberacion) {
-        return Response.json({
-          error: "Ya firmada",
-          message: `${participant.nombre} ${participant.apellidos || ''} ya firmó la liberación`,
-          participant: { ...participant, uid, ...existing }
-        }, { status: 400 });
-      }
-
-      existing.liberacion = true;
-      existing.liberacionTime = new Date().toISOString();
-
-    } else if (stage === "registro") {
-      if (!existing.liberacion) {
-        return Response.json({
-          error: "Liberación pendiente",
-          message: `${participant.nombre} ${participant.apellidos || ''} debe firmar la liberación primero`,
-          participant: { ...participant, uid, ...existing }
-        }, { status: 400 });
-      }
-
+    if (stage === "registro") {
       if (existing.checkedIn) {
         return Response.json({
           error: "Ya registrado",
@@ -79,7 +59,7 @@ export async function onRequestPost(context) {
 
     await env.CHECKIN_KV.put(`checkin:uid_${uid}`, JSON.stringify(existing));
 
-    const stageLabel = stage === "liberacion" ? "Liberación firmada" : stage === "registro" ? "Check-in de registro" : "Retiro de kit";
+    const stageLabel = stage === "registro" ? "Check-in de registro" : "Retiro de kit";
 
     return Response.json({
       success: true,

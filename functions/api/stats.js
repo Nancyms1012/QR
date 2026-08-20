@@ -1,4 +1,4 @@
-// GET /api/stats - Check-in statistics by competition
+// GET /api/stats - Check-in statistics by competition (2 stages: registro + kit)
 export async function onRequestGet(context) {
   const { env } = context;
 
@@ -17,30 +17,26 @@ export async function onRequestGet(context) {
     }
 
     const total = participantsRaw.length;
-    let liberacion = 0, checkedIn = 0, kitRetirado = 0;
+    let checkedIn = 0, kitRetirado = 0;
     const competencias = {};
 
     participantsRaw.forEach((p, index) => {
       const checkin = checkinData[String(index)] || {};
-      const isLib = Boolean(checkin.liberacion);
       const isChecked = Boolean(checkin.checkedIn);
       const isKit = Boolean(checkin.kitRetirado);
 
-      if (isLib) liberacion++;
       if (isChecked) checkedIn++;
       if (isKit) kitRetirado++;
 
       const comp = p.competencia || 'Sin competencia';
-      if (!competencias[comp]) competencias[comp] = { total: 0, liberacion: 0, checkedIn: 0, kitRetirado: 0 };
+      if (!competencias[comp]) competencias[comp] = { total: 0, checkedIn: 0, kitRetirado: 0 };
       competencias[comp].total++;
-      if (isLib) competencias[comp].liberacion++;
       if (isChecked) competencias[comp].checkedIn++;
       if (isKit) competencias[comp].kitRetirado++;
     });
 
     return Response.json({
-      total, liberacion, checkedIn, kitRetirado,
-      pendingLiberacion: total - liberacion,
+      total, checkedIn, kitRetirado,
       pendingRegistro: total - checkedIn,
       pendingKit: total - kitRetirado,
       competencias

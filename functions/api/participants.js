@@ -42,8 +42,6 @@ export async function onRequestGet(context) {
       return {
         ...p,
         uid: index,
-        liberacion: Boolean(checkin.liberacion),
-        liberacionTime: checkin.liberacionTime || null,
         checkedIn: Boolean(checkin.checkedIn),
         checkInTime: checkin.checkInTime || null,
         kitRetirado: Boolean(checkin.kitRetirado),
