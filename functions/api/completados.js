@@ -1,20 +1,40 @@
-// GET /api/completados - Returns participants with both check-in AND kit delivered
-// Optimized: reads only the completados list key
+// GET /api/completados - Participants with all 3 steps completed
 export async function onRequestGet(context) {
   try {
     const { env } = context;
+    if (!env.CHECKIN_KV) return Response.json({ error: "KV no vinculado" }, { status: 500 });
 
-    if (!env.CHECKIN_KV) {
-      return Response.json({ error: "KV no vinculado" }, { status: 500 });
-    }
+    const raw = await env.CHECKIN_KV.get("participants");
+    if (!raw) return Response.json([]);
+    const participants = JSON.parse(raw);
+    if (!Array.isArray(participants)) return Response.json([]);
 
-    const completadosRaw = await env.CHECKIN_KV.get("completados-list", { type: "json" });
-    
-    if (!completadosRaw || completadosRaw.length === 0) {
-      return Response.json([]);
-    }
+    const list = await env.CHECKIN_KV.list({ prefix: "checkin:uid_" });
+    if (list.keys.length === 0) return Response.json([]);
 
-    return Response.json(completadosRaw);
+    const checkinData = {};
+    const promises = list.keys.map(async (key) => {
+      const val = await env.CHECKIN_KV.get(key.name, { type: "json" });
+      checkinData[key.name.replace("checkin:uid_", "")] = val;
+    });
+    await Promise.all(promises);
+
+    const result = participants
+      .map((p, index) => ({ ...p, uid: index, checkin: checkinData[String(index)] }))
+      .filter(p => p.checkin && p.checkin.kitRetirado)
+      .map(p => ({
+        ...p,
+        liberacion: true,
+        liberacionTime: p.checkin.liberacionTime,
+        checkedIn: true,
+        checkInTime: p.checkin.checkInTime,
+        kitRetirado: true,
+        kitRetiroTime: p.checkin.kitRetiroTime
+      }))
+      .sort((a, b) => new Date(b.kitRetiroTime) - new Date(a.kitRetiroTime));
+
+    result.forEach(p => delete p.checkin);
+    return Response.json(result);
   } catch (err) {
     return Response.json({ error: "Error interno", details: err.message }, { status: 500 });
   }

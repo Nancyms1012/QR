@@ -3,15 +3,21 @@ export async function onRequestPost(context) {
   const { env } = context;
 
   try {
-    // Delete all check-in keys
-    const list = await env.CHECKIN_KV.list({ prefix: "checkin:" });
+    // Delete all uid-based check-in keys
+    const list = await env.CHECKIN_KV.list({ prefix: "checkin:uid_" });
     for (const key of list.keys) {
       await env.CHECKIN_KV.delete(key.name);
     }
 
-    // Clear kit-pending and completados lists
-    await env.CHECKIN_KV.put("kit-pending-list", "[]");
-    await env.CHECKIN_KV.put("completados-list", "[]");
+    // Also clean old dorsal-based keys if any
+    const oldList = await env.CHECKIN_KV.list({ prefix: "checkin:" });
+    for (const key of oldList.keys) {
+      await env.CHECKIN_KV.delete(key.name);
+    }
+
+    // Clear legacy lists
+    await env.CHECKIN_KV.delete("kit-pending-list");
+    await env.CHECKIN_KV.delete("completados-list");
 
     return Response.json({
       success: true,

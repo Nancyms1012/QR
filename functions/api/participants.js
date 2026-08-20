@@ -1,4 +1,5 @@
 // GET /api/participants - List all participants with their check-in status
+// Uses uid (index in array) as unique identifier per person/row
 export async function onRequestGet(context) {
   try {
     const { env } = context;
@@ -23,31 +24,30 @@ export async function onRequestGet(context) {
       return Response.json({ error: "Datos no son array" }, { status: 500 });
     }
 
-    // Get all check-in data in one batch using KV list
+    // Get all check-in data in one batch
     const checkinData = {};
-    const list = await env.CHECKIN_KV.list({ prefix: "checkin:" });
-    
-    // Fetch check-in values (only if there are any)
+    const list = await env.CHECKIN_KV.list({ prefix: "checkin:uid_" });
     if (list.keys.length > 0) {
-      const checkinPromises = list.keys.map(async (key) => {
+      const promises = list.keys.map(async (key) => {
         const val = await env.CHECKIN_KV.get(key.name, { type: "json" });
-        const dorsal = key.name.replace("checkin:", "");
-        checkinData[dorsal] = val;
+        const uid = key.name.replace("checkin:uid_", "");
+        checkinData[uid] = val;
       });
-      await Promise.all(checkinPromises);
+      await Promise.all(promises);
     }
 
     // Merge participants with check-in status
-    const result = participants.map(p => {
-      const checkin = checkinData[String(p.dorsal)];
+    const result = participants.map((p, index) => {
+      const checkin = checkinData[String(index)] || {};
       return {
         ...p,
-        liberacion: checkin ? Boolean(checkin.liberacion) : false,
-        liberacionTime: checkin ? checkin.liberacionTime : null,
-        checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
-        checkInTime: checkin ? checkin.checkInTime : null,
-        kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,
-        kitRetiroTime: checkin ? checkin.kitRetiroTime : null
+        uid: index,
+        liberacion: Boolean(checkin.liberacion),
+        liberacionTime: checkin.liberacionTime || null,
+        checkedIn: Boolean(checkin.checkedIn),
+        checkInTime: checkin.checkInTime || null,
+        kitRetirado: Boolean(checkin.kitRetirado),
+        kitRetiroTime: checkin.kitRetiroTime || null
       };
     });
 

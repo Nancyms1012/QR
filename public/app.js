@@ -137,9 +137,9 @@ const btnUndoCheckin = document.getElementById('btn-undo-checkin');
 const btnCloseModal = document.getElementById('btn-close-modal');
 let currentParticipant = null;
 
-async function showCheckinModal(dorsal) {
+async function showCheckinModal(uid) {
   try {
-    const res = await fetch(`/api/participants/${dorsal}`);
+    const res = await fetch(`/api/participants/${uid}`);
     if (!res.ok) throw new Error('No encontrado');
     currentParticipant = await res.json();
 
@@ -217,7 +217,7 @@ async function showCheckinModal(dorsal) {
 
     modal.classList.remove('hidden');
   } catch (err) {
-    alert('Participante no encontrado con dorsal: ' + dorsal);
+    alert('Participante no encontrado');
   }
 }
 
@@ -225,7 +225,7 @@ async function showCheckinModal(dorsal) {
 document.getElementById('btn-confirm-liberacion').addEventListener('click', async () => {
   if (!currentParticipant) return;
   try {
-    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+    const res = await fetch(`/api/checkin/${currentParticipant.uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'liberacion' })
@@ -234,7 +234,7 @@ document.getElementById('btn-confirm-liberacion').addEventListener('click', asyn
 
     if (res.ok) {
       currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.dorsal);
+      showCheckinModal(currentParticipant.uid);
 
       scanResult.classList.remove('hidden');
       scanResult.className = 'result-card success';
@@ -253,7 +253,7 @@ document.getElementById('btn-confirm-liberacion').addEventListener('click', asyn
 btnConfirmCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
   try {
-    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+    const res = await fetch(`/api/checkin/${currentParticipant.uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'registro' })
@@ -262,7 +262,7 @@ btnConfirmCheckin.addEventListener('click', async () => {
 
     if (res.ok) {
       currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.dorsal);
+      showCheckinModal(currentParticipant.uid);
 
       scanResult.classList.remove('hidden');
       scanResult.className = 'result-card success';
@@ -284,7 +284,7 @@ const btnConfirmKit = document.getElementById('btn-confirm-kit');
 btnConfirmKit.addEventListener('click', async () => {
   if (!currentParticipant) return;
   try {
-    const res = await fetch(`/api/checkin/${currentParticipant.dorsal}`, {
+    const res = await fetch(`/api/checkin/${currentParticipant.uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'kit' })
@@ -293,7 +293,7 @@ btnConfirmKit.addEventListener('click', async () => {
 
     if (res.ok) {
       currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.dorsal);
+      showCheckinModal(currentParticipant.uid);
 
       scanResult.classList.remove('hidden');
       scanResult.className = 'result-card success';
@@ -314,11 +314,11 @@ btnUndoCheckin.addEventListener('click', async () => {
   if (!currentParticipant) return;
   if (!confirm(`¿Revertir check-in de ${currentParticipant.nombre}?`)) return;
   try {
-    const res = await fetch(`/api/undo-checkin/${currentParticipant.dorsal}`, { method: 'POST' });
+    const res = await fetch(`/api/undo-checkin/${currentParticipant.uid}`, { method: 'POST' });
     const data = await res.json();
     if (res.ok) {
       currentParticipant = data.participant;
-      showCheckinModal(currentParticipant.dorsal);
+      showCheckinModal(currentParticipant.uid);
     }
   } catch (err) {
     alert('Error al revertir check-in');
@@ -394,7 +394,7 @@ btnSaveContact.addEventListener('click', async () => {
   const licencia = document.getElementById('edit-licencia').value.trim();
 
   try {
-    const res = await fetch(`/api/participants/${currentParticipant.dorsal}`, {
+    const res = await fetch(`/api/participants/${currentParticipant.uid}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia })
@@ -406,7 +406,7 @@ btnSaveContact.addEventListener('click', async () => {
       alert(`✅ Datos actualizados`);
       Object.assign(currentParticipant, { nombre, apellidos, genero, categoria, competencia, talla, telefono, email, id_participante, socio, licencia });
       editModal.classList.add('hidden');
-      showCheckinModal(currentParticipant.dorsal);
+      showCheckinModal(currentParticipant.uid);
     } else {
       alert('❌ Error: ' + (data.error || 'No se pudo guardar'));
     }
@@ -600,7 +600,7 @@ function createParticipantCard(p) {
   const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
 
   return `
-    <div class="participant-card ${statusClass}" data-dorsal="${p.dorsal}" style="${cardStyle}">
+    <div class="participant-card ${statusClass}" data-uid="${p.uid}" style="${cardStyle}">
       <div class="participant-info">
         <span class="dorsal">#${p.dorsal}</span>
         <div class="nombre">${getDisplayName(p)}</div>
@@ -621,7 +621,7 @@ function createParticipantCard(p) {
 function attachCardListeners() {
   document.querySelectorAll('.participant-card').forEach(card => {
     card.addEventListener('click', () => {
-      showCheckinModal(parseInt(card.dataset.dorsal));
+      showCheckinModal(parseInt(card.dataset.uid));
     });
   });
 }
@@ -877,9 +877,9 @@ function renderSendList(query) {
     const hasEmail = p.email && p.email.trim();
 
     return `
-      <div class="send-card" data-dorsal="${p.dorsal}">
+      <div class="send-card" data-uid="${p.uid}">
         <label class="send-checkbox">
-          <input type="checkbox" class="participant-check" data-dorsal="${p.dorsal}" ${hasEmail ? '' : 'disabled'} />
+          <input type="checkbox" class="participant-check" data-uid="${p.uid}" ${hasEmail ? '' : 'disabled'} />
         </label>
         <div class="send-info">
           <span class="dorsal">#${p.dorsal}</span>
@@ -1457,7 +1457,7 @@ async function loadKitList() {
               ${generoLabel ? `<span style="background:#9333ea;color:white;padding:0.3rem 0.8rem;border-radius:6px;font-size:1.1rem;font-weight:700;">⚧️ ${generoLabel}</span>` : ''}
             </div>
           </div>
-          <button class="btn btn-primary" onclick="entregarKit(${p.dorsal})" style="white-space:nowrap;">
+          <button class="btn btn-primary" onclick="entregarKit(${p.uid})" style="white-space:nowrap;">
             📦 Entregar Kit
           </button>
         </div>
@@ -1468,9 +1468,9 @@ async function loadKitList() {
   }
 }
 
-async function entregarKit(dorsal) {
+async function entregarKit(uid) {
   try {
-    const res = await fetch(`/api/checkin/${dorsal}`, {
+    const res = await fetch(`/api/checkin/${uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'kit' })
@@ -1583,7 +1583,7 @@ async function loadLiberacionList() {
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       const libTime = p.liberacionTime ? new Date(p.liberacionTime).toLocaleTimeString('es-CR') : '';
       return `
-        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})">
+        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.uid})">
           <div class="send-info" style="cursor:pointer;">
             <span class="dorsal">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
@@ -1627,7 +1627,7 @@ async function searchForLiberacion() {
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       return `
         <div class="send-card" style="${cardStyle}">
-          <div class="send-info" onclick="showCheckinModal(${p.dorsal})" style="cursor:pointer;">
+          <div class="send-info" onclick="showCheckinModal(${p.uid})" style="cursor:pointer;">
             <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
             <div class="contacto">
@@ -1635,7 +1635,7 @@ async function searchForLiberacion() {
               <span>🏷️ ${p.categoria || ''}</span>
             </div>
           </div>
-          <button class="btn btn-success" onclick="event.stopPropagation(); marcarLiberacion(${p.dorsal})" style="white-space:nowrap;">
+          <button class="btn btn-success" onclick="event.stopPropagation(); marcarLiberacion(${p.uid})" style="white-space:nowrap;">
             ✍️ Firmó
           </button>
         </div>
@@ -1646,9 +1646,9 @@ async function searchForLiberacion() {
   }
 }
 
-async function marcarLiberacion(dorsal) {
+async function marcarLiberacion(uid) {
   try {
-    const res = await fetch(`/api/checkin/${dorsal}`, {
+    const res = await fetch(`/api/checkin/${uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'liberacion' })
@@ -1704,7 +1704,7 @@ async function loadRegistroList() {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       return `
-        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})">
+        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.uid})">
           <div class="send-info" style="cursor:pointer;">
             <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
@@ -1714,7 +1714,7 @@ async function loadRegistroList() {
               ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
             </div>
           </div>
-          <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.dorsal})" style="white-space:nowrap;">
+          <button class="btn btn-success" onclick="event.stopPropagation(); marcarRegistro(${p.uid})" style="white-space:nowrap;">
             ✅ Registrar
           </button>
         </div>
@@ -1725,9 +1725,9 @@ async function loadRegistroList() {
   }
 }
 
-async function marcarRegistro(dorsal) {
+async function marcarRegistro(uid) {
   try {
-    const res = await fetch(`/api/checkin/${dorsal}`, {
+    const res = await fetch(`/api/checkin/${uid}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 'registro' })

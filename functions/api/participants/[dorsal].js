@@ -1,113 +1,75 @@
-// GET /api/participants/:dorsal - Get a single participant
+// GET /api/participants/:uid - Get a single participant by uid
+// PUT /api/participants/:uid - Update participant data
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const dorsal = parseInt(params.dorsal);
+  const uid = parseInt(params.dorsal); // reusing route param name but it's actually uid
 
   try {
     if (!env.CHECKIN_KV) {
-      return new Response(JSON.stringify({ error: "KV no vinculado" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "KV no vinculado" }, { status: 500 });
     }
 
     const participantsRaw = await env.CHECKIN_KV.get("participants", { type: "json" });
-    if (!participantsRaw) {
-      return new Response(JSON.stringify({ error: "No hay datos" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+    if (!participantsRaw || !Array.isArray(participantsRaw)) {
+      return Response.json({ error: "No hay datos" }, { status: 404 });
     }
 
-    const participant = participantsRaw.find(p => p.dorsal === dorsal);
+    const participant = participantsRaw[uid];
     if (!participant) {
-      return new Response(JSON.stringify({ error: "Participante no encontrado" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "Participante no encontrado" }, { status: 404 });
     }
 
     // Get check-in status
-    const checkin = await env.CHECKIN_KV.get(`checkin:${dorsal}`, { type: "json" });
+    const checkin = await env.CHECKIN_KV.get(`checkin:uid_${uid}`, { type: "json" }) || {};
 
-    return new Response(JSON.stringify({
+    return Response.json({
       ...participant,
-      liberacion: checkin ? Boolean(checkin.liberacion) : false,
-      liberacionTime: checkin ? checkin.liberacionTime : null,
-      checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
-      checkInTime: checkin ? checkin.checkInTime : null,
-      kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,
-      kitRetiroTime: checkin ? checkin.kitRetiroTime : null
-    }), {
-      headers: { "Content-Type": "application/json" }
+      uid: uid,
+      liberacion: Boolean(checkin.liberacion),
+      liberacionTime: checkin.liberacionTime || null,
+      checkedIn: Boolean(checkin.checkedIn),
+      checkInTime: checkin.checkInTime || null,
+      kitRetirado: Boolean(checkin.kitRetirado),
+      kitRetiroTime: checkin.kitRetiroTime || null
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Error interno", details: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json({ error: "Error interno", details: err.message }, { status: 500 });
   }
 }
 
-// PUT /api/participants/:dorsal - Update participant contact info
 export async function onRequestPut(context) {
   const { env, params, request } = context;
-  const dorsal = parseInt(params.dorsal);
+  const uid = parseInt(params.dorsal);
 
   try {
     if (!env.CHECKIN_KV) {
-      return new Response(JSON.stringify({ error: "KV no vinculado" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ error: "KV no vinculado" }, { status: 500 });
     }
 
     const body = await request.json();
     const participantsRaw = await env.CHECKIN_KV.get("participants", { type: "json" });
-    if (!participantsRaw) {
-      return new Response(JSON.stringify({ error: "No hay datos" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+    if (!participantsRaw || !Array.isArray(participantsRaw)) {
+      return Response.json({ error: "No hay datos" }, { status: 404 });
     }
 
-    const index = participantsRaw.findIndex(p => p.dorsal === dorsal);
-    if (index === -1) {
-      return new Response(JSON.stringify({ error: "Participante no encontrado" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      });
+    if (!participantsRaw[uid]) {
+      return Response.json({ error: "Participante no encontrado" }, { status: 404 });
     }
 
     // Update allowed fields
-    if (body.telefono !== undefined) participantsRaw[index].telefono = body.telefono;
-    if (body.email !== undefined) participantsRaw[index].email = body.email;
-    if (body.nombre !== undefined) participantsRaw[index].nombre = body.nombre;
-    if (body.apellidos !== undefined) participantsRaw[index].apellidos = body.apellidos;
-    if (body.genero !== undefined) participantsRaw[index].genero = body.genero;
-    if (body.categoria !== undefined) participantsRaw[index].categoria = body.categoria;
-    if (body.competencia !== undefined) participantsRaw[index].competencia = body.competencia;
-    if (body.talla !== undefined) participantsRaw[index].talla = body.talla;
-    if (body.color !== undefined) participantsRaw[index].color = body.color;
-    if (body.id_participante !== undefined) participantsRaw[index].id_participante = body.id_participante;
-    if (body.socio !== undefined) participantsRaw[index].socio = body.socio;
-    if (body.licencia !== undefined) participantsRaw[index].licencia = body.licencia;
-    if (body.equipo !== undefined) participantsRaw[index].equipo = body.equipo;
+    const fields = ['nombre', 'apellidos', 'genero', 'categoria', 'competencia', 'talla', 'color', 'telefono', 'email', 'id_participante', 'socio', 'licencia', 'equipo'];
+    for (const field of fields) {
+      if (body[field] !== undefined) participantsRaw[uid][field] = body[field];
+    }
 
-    // Save back to KV
     await env.CHECKIN_KV.put("participants", JSON.stringify(participantsRaw));
 
-    return new Response(JSON.stringify({
+    return Response.json({
       success: true,
-      message: `Datos actualizados para ${participantsRaw[index].nombre}`,
-      participant: participantsRaw[index]
-    }), {
-      headers: { "Content-Type": "application/json" }
+      message: `Datos actualizados`,
+      participant: participantsRaw[uid]
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Error interno", details: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json({ error: "Error interno", details: err.message }, { status: 500 });
   }
 }
