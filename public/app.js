@@ -1594,8 +1594,8 @@ async function loadLiberacionList() {
       const bgColor = getColorForParticipant(p);
       const cardStyle = bgColor ? `background: ${bgColor}20; border-left: 5px solid ${bgColor};` : '';
       return `
-        <div class="send-card" style="${cardStyle}">
-          <div class="send-info">
+        <div class="send-card" style="${cardStyle}" onclick="showCheckinModal(${p.dorsal})" data-dorsal="${p.dorsal}">
+          <div class="send-info" style="cursor:pointer;">
             <span class="dorsal" style="font-size:1.6rem;">#${p.dorsal}</span>
             <div class="nombre">${getDisplayName(p)}</div>
             <div class="contacto">
@@ -1603,7 +1603,7 @@ async function loadLiberacionList() {
               <span>🏷️ ${p.categoria || ''}</span>
             </div>
           </div>
-          <button class="btn btn-success" onclick="marcarLiberacion(${p.dorsal})" style="white-space:nowrap;">
+          <button class="btn btn-success" onclick="event.stopPropagation(); marcarLiberacion(${p.dorsal})" style="white-space:nowrap;">
             ✍️ Firmó
           </button>
         </div>
