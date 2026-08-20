@@ -1105,6 +1105,9 @@ if (moduleKids) moduleKids.addEventListener('change', saveModuleSettings);
 // Load module settings on page load
 loadModuleSettings();
 
+// Load default view (Registro) on page load
+loadRegistroList();
+
 // File upload
 const btnUpload = document.getElementById('btn-upload');
 const fileUpload = document.getElementById('file-upload');
