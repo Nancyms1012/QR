@@ -32,9 +32,11 @@ export async function onRequestGet(context) {
 
     return new Response(JSON.stringify({
       ...participant,
-      checkedIn: checkin ? checkin.checkedIn : false,
+      liberacion: checkin ? Boolean(checkin.liberacion) : false,
+      liberacionTime: checkin ? checkin.liberacionTime : null,
+      checkedIn: checkin ? Boolean(checkin.checkedIn) : false,
       checkInTime: checkin ? checkin.checkInTime : null,
-      kitRetirado: checkin ? checkin.kitRetirado : false,
+      kitRetirado: checkin ? Boolean(checkin.kitRetirado) : false,
       kitRetiroTime: checkin ? checkin.kitRetiroTime : null
     }), {
       headers: { "Content-Type": "application/json" }
