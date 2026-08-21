@@ -423,12 +423,8 @@ async function loadParticipantsList() {
 
     if (filterStatus.value === 'checked') {
       filtered = filtered.filter(p => p.checkedIn);
-    } else if (filterStatus.value === 'kit') {
-      filtered = filtered.filter(p => p.kitRetirado);
-    } else if (filterStatus.value === 'complete') {
-      filtered = filtered.filter(p => p.checkedIn && p.kitRetirado);
     } else if (filterStatus.value === 'pending') {
-      filtered = filtered.filter(p => !p.checkedIn && !p.kitRetirado);
+      filtered = filtered.filter(p => !p.checkedIn);
     }
 
     filtered.sort((a, b) => a.dorsal - b.dorsal);
