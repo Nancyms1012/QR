@@ -518,6 +518,7 @@ function createParticipantCard(p) {
           ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
           ${p.genero ? `<span>⚧️ ${p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero}</span>` : ''}
           ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+          ${p.licencia ? `<span>📜 ${p.licencia}</span>` : ''}
           ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:#1e3a5f;font-weight:700;">✓ SOCIO: SÍ</span>` : `<span>Socio: NO</span>`}
           ${p.equipo ? `<span style="background:#C5D9F1;color:#1e293b;font-weight:700;">🏆 ${p.equipo}</span>` : ''}
         </div>
@@ -1509,6 +1510,7 @@ async function searchForRegistro() {
               <span>🏅 ${p.competencia || ''}</span>
               <span>🏷️ ${p.categoria || ''}</span>
               ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+              ${p.licencia ? `<span>📜 ${p.licencia}</span>` : ''}
               ${p.equipo ? `<span style="background:#C5D9F1;color:#1e293b;font-weight:700;padding:0.15rem 0.4rem;border-radius:4px;">🏆 ${p.equipo}</span>` : ''}
               ${p.socio && p.socio.toLowerCase() === 'si' ? `<span style="background:#FFBA31;color:#1e3a5f;font-weight:700;padding:0.15rem 0.4rem;border-radius:4px;">✓ SOCIO</span>` : `<span>Socio: NO</span>`}
             </div>
