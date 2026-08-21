@@ -54,6 +54,16 @@
       <div id="chip-upload-msg" style="margin-top:0.5rem;"></div>
     </div>
 
+    <!-- EXPORT -->
+    <div class="admin-card" style="margin-top:1.5rem;">
+      <h3>📥 Exportar</h3>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportChips('todos')">📥 Total</button>
+        <button class="btn btn-success" onclick="exportChips('recibidos')">📥 Recibidos</button>
+        <button class="btn btn-danger" onclick="exportChips('pendientes')">📥 Pendientes</button>
+      </div>
+    </div>
+
     <!-- RECENT -->
     <h3 style="margin-top:1.5rem;font-size:1rem;color:var(--text-light);">✅ Últimos chips recibidos:</h3>
     <div id="chip-recent" class="send-list"></div>
@@ -197,6 +207,8 @@
         
         let dorsalCol = header.findIndex(h => h === 'NUMERO' || h === 'DORSAL' || h === 'NUM' || h === 'BIB');
         let nombreCol = header.findIndex(h => h === 'NOMBRE' || h === 'NAME');
+        let apellido1Col = header.findIndex(h => h === 'APELLIDO1' || h === 'APELLIDO 1' || h === 'APELLIDOS' || h === 'APELLIDO');
+        let apellido2Col = header.findIndex(h => h === 'APELLIDO2' || h === 'APELLIDO 2');
 
         if (dorsalCol === -1) dorsalCol = 0;
 
@@ -204,7 +216,10 @@
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/^['"]|['"]$/g, ''));
           const dorsal = cols[dorsalCol];
-          const nombre = nombreCol >= 0 ? cols[nombreCol] : '';
+          let nombre = nombreCol >= 0 ? cols[nombreCol] : '';
+          if (apellido1Col >= 0 && cols[apellido1Col]) nombre += ' ' + cols[apellido1Col];
+          if (apellido2Col >= 0 && cols[apellido2Col]) nombre += ' ' + cols[apellido2Col];
+          nombre = nombre.trim();
           if (dorsal) chips.push({ dorsal, nombre, devuelto: false, devueltoTime: null });
         }
 
@@ -239,6 +254,47 @@
           chipSearchResults.innerHTML = '';
         }
       } catch (err) { alert('Error'); }
+    }
+
+    async function exportChips(tipo) {
+      try {
+        const res = await fetch('/api/chips');
+        const chips = await res.json();
+        if (!Array.isArray(chips) || chips.length === 0) {
+          alert('No hay datos para exportar');
+          return;
+        }
+
+        let filtered;
+        let filename;
+        if (tipo === 'recibidos') {
+          filtered = chips.filter(c => c.devuelto);
+          filename = 'chips_recibidos.csv';
+        } else if (tipo === 'pendientes') {
+          filtered = chips.filter(c => !c.devuelto);
+          filename = 'chips_pendientes.csv';
+        } else {
+          filtered = chips;
+          filename = 'chips_total.csv';
+        }
+
+        if (filtered.length === 0) {
+          alert('No hay datos en esa categoría');
+          return;
+        }
+
+        const header = 'DORSAL;NOMBRE;DEVUELTO;HORA';
+        const rows = filtered.map(c => `${c.dorsal};${c.nombre || ''};${c.devuelto ? 'SI' : 'NO'};${c.devueltoTime ? new Date(c.devueltoTime).toLocaleString('es-CR') : ''}`);
+        const csv = [header, ...rows].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+      } catch (err) {
+        alert('Error al exportar');
+      }
     }
   </script>
 </body>
