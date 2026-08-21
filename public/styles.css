@@ -366,21 +366,21 @@ h2 {
 .modal-content {
   background: var(--card-bg);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 2.5rem;
   max-width: 600px;
   width: 100%;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
 .modal-content .dorsal-big {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 800;
   color: var(--primary);
   text-align: center;
 }
 
 .modal-content .nombre-big {
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 600;
   text-align: center;
   margin: 0.5rem 0;
@@ -389,7 +389,7 @@ h2 {
 .modal-content .categoria-big {
   text-align: center;
   color: var(--text-light);
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   margin-bottom: 1rem;
 }
 
