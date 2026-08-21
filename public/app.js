@@ -1538,7 +1538,6 @@ async function marcarRegistro(uid) {
     if (res.ok) {
       regSearchInput.value = '';
       regSearchResults.innerHTML = '';
-      loadRegistroList();
     } else {
       alert(data.message || data.error);
     }
