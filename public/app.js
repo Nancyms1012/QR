@@ -429,7 +429,7 @@ async function loadParticipantsList() {
 
     filtered.sort((a, b) => a.dorsal - b.dorsal);
     participantsList.innerHTML = filtered.length > 0
-      ? filtered.map(p => createParticipantCard(p)).join('')
+      ? `<p style="font-weight:600;color:var(--text-light);margin-bottom:0.5rem;">📋 ${filtered.length} participante(s)</p>` + filtered.map(p => createParticipantCard(p)).join('')
       : '<p style="color:#64748b;text-align:center;padding:2rem;">No se encontraron participantes</p>';
     attachCardListeners();
   } catch (err) {
