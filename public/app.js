@@ -1472,14 +1472,14 @@ const regList = document.getElementById('reg-list');
 if (regSearchInput) regSearchInput.addEventListener('keyup', searchForRegistro);
 
 async function loadRegistroList() {
-  // Load those registered but kit pending (waiting for next step)
+  // Load recently completed registrations
   try {
-    const res = await fetch('/api/kit-pending');
+    const res = await fetch('/api/completados');
     const participants = await res.json();
     if (!Array.isArray(participants)) return;
 
     if (participants.length === 0) {
-      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay registrados pendientes de kit</p>';
+      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay registrados aún</p>';
       return;
     }
 
