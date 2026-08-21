@@ -1554,7 +1554,8 @@ const KIDS_CATEGORIES = [
   { name: '4-5 años', minAge: 4, maxAge: 5, capacity: 18 },
   { name: '6-7 años', minAge: 6, maxAge: 7, capacity: 15 },
   { name: '8-9 años', minAge: 8, maxAge: 9, capacity: 12 },
-  { name: '10-11 años', minAge: 10, maxAge: 11, capacity: 9 }
+  { name: '10-11 años', minAge: 10, maxAge: 11, capacity: 9 },
+  { name: '12-13 años', minAge: 12, maxAge: 13, capacity: 9 }
 ];
 
 const kidsFechaInput = document.getElementById('kids-fecha');
