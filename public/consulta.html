@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XTERRA CR - Consulta</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <img src="/logo-xterra.png" alt="XTERRA CR" style="max-width:180px;height:auto;margin-bottom:0.3rem;border-radius:4px;mix-blend-mode:multiply;">
+    <p style="color:rgba(255,255,255,0.8);font-size:0.85rem;margin-top:0.3rem;">Modo Consulta (solo lectura)</p>
+  </header>
+
+  <main>
+    <h2>🔍 Consultar Participante</h2>
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Buscar por dorsal o nombre..." autocomplete="off">
+      <button id="btn-search" class="btn btn-primary">Buscar</button>
+    </div>
+    <div id="search-results"></div>
+
+    <!-- MODAL (read-only) -->
+    <div id="info-modal" class="modal hidden">
+      <div class="modal-content">
+        <div id="modal-body"></div>
+        <div class="modal-actions">
+          <button id="btn-close" class="btn btn-secondary">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById('search-input');
+    const btnSearch = document.getElementById('btn-search');
+    const searchResults = document.getElementById('search-results');
+    const modal = document.getElementById('info-modal');
+    const modalBody = document.getElementById('modal-body');
+    const btnClose = document.getElementById('btn-close');
+
+    btnSearch.addEventListener('click', performSearch);
+    searchInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') performSearch();
+      if (searchInput.value.length >= 2) performSearch();
+    });
+
+    btnClose.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    async function performSearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) { searchResults.innerHTML = ''; return; }
+
+      try {
+        const res = await fetch('/api/participants');
+        const participants = await res.json();
+        if (!Array.isArray(participants)) return;
+
+        let filtered = participants.filter(p => {
+          if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+          return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+        });
+
+        if (filtered.length === 0) {
+          searchResults.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No se encontraron resultados</p>';
+          return;
+        }
+
+        searchResults.innerHTML = filtered.slice(0, 10).map(p => {
+          const genero = p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero || '';
+          return `
+            <div class="participant-card" style="cursor:pointer;" onclick="showInfo(${p.uid})">
+              <div class="participant-info">
+                <span class="dorsal">#${p.dorsal}</span>
+                <div class="nombre">${p.nombre || ''} ${p.apellidos || ''}</div>
+                <div class="participant-details">
+                  ${p.competencia ? `<span>🏅 ${p.competencia}</span>` : ''}
+                  ${p.categoria ? `<span>🏷️ ${p.categoria}</span>` : ''}
+                  ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
+                </div>
+              </div>
+              <div style="font-size:1.2rem;">${p.checkedIn ? '✅' : '⏳'}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        searchResults.innerHTML = '<p style="color:red;">Error al buscar</p>';
+      }
+    }
+
+    async function showInfo(uid) {
+      try {
+        const res = await fetch(`/api/participants/${uid}`);
+        if (!res.ok) return;
+        const p = await res.json();
+
+        const checkTime = p.checkInTime ? new Date(p.checkInTime).toLocaleString('es-CR') : '';
+        const genero = p.genero === 'M' ? 'Masculino' : p.genero === 'W' ? 'Femenino' : p.genero || '';
+
+        modalBody.innerHTML = `
+          <div class="dorsal-big">#${p.dorsal}</div>
+          <div class="nombre-big">${p.nombre || ''} ${p.apellidos || ''}</div>
+          ${p.licencia ? `<div style="text-align:center;font-size:1rem;">📜 Licencia: <span style="color:${p.licencia.toLowerCase() === 'si' ? '#16a34a' : '#dc2626'};font-weight:700;">${p.licencia}</span></div>` : ''}
+          ${p.socio && p.socio.toLowerCase() === 'si' ? `<div style="text-align:center;margin:0.4rem 0;"><span style="background:#FFBA31;color:#1e3a5f;padding:0.3rem 0.8rem;border-radius:6px;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span></div>` : '<div style="text-align:center;margin:0.4rem 0;">Socio: NO</div>'}
+          <div class="categoria-big">${p.categoria || ''}</div>
+          ${p.competencia ? `<div style="text-align:center;font-size:1rem;color:var(--text-light);">${p.competencia}</div>` : ''}
+          ${p.equipo ? `<div style="text-align:center;margin:0.3rem 0;"><span style="background:#C5D9F1;color:#1e293b;padding:0.3rem 0.8rem;border-radius:6px;font-weight:700;">🏆 Equipo: ${p.equipo}</span></div>` : ''}
+          ${genero ? `<div style="text-align:center;font-size:0.9rem;color:var(--text-light);">⚧️ ${genero}</div>` : ''}
+          ${p.talla ? `<div style="text-align:center;margin:0.3rem 0;"><span style="background:#eff6ff;color:#2563eb;padding:0.3rem 0.8rem;border-radius:6px;font-weight:600;">👕 Talla: ${p.talla}</span></div>` : ''}
+          <div style="margin-top:1rem;text-align:center;padding:0.7rem;border-radius:8px;font-weight:600;${p.checkedIn ? 'background:#dcfce7;color:#166534;' : 'background:#fef3c7;color:#92400e;'}">
+            ${p.checkedIn ? `✅ Registrado: ${checkTime}` : '⏳ Pendiente de registro'}
+          </div>
+        `;
+
+        modal.classList.remove('hidden');
+      } catch (err) {
+        alert('Error al cargar datos');
+      }
+    }
+  </script>
+</body>
+</html>
