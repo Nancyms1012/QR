@@ -159,7 +159,7 @@ async function showCheckinModal(uid) {
       <div style="${modalColorStyle}">
         <div class="dorsal-big">#${currentParticipant.dorsal}</div>
         <div class="nombre-big">${getDisplayName(currentParticipant)}</div>
-        ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: ${currentParticipant.licencia}</div>` : ''}
+        ${currentParticipant.licencia ? `<div style="text-align:center;color:var(--text-light);font-size:0.9rem;">📜 Licencia: <span style="color:${currentParticipant.licencia.toLowerCase() === 'si' ? '#16a34a' : '#dc2626'};font-weight:700;">${currentParticipant.licencia}</span></div>` : ''}
         ${currentParticipant.socio && currentParticipant.socio.toLowerCase() === 'si' ? `<div style="text-align:center;margin:0.4rem 0;"><span style="background:#FFBA31;color:#1e3a5f;padding:0.3rem 0.8rem;border-radius:6px;font-weight:700;font-size:1rem;">✓ SOCIO: SÍ</span></div>` : '<div style="text-align:center;margin:0.4rem 0;">Socio: NO</div>'}
         <div class="categoria-big">${currentParticipant.categoria || ''}</div>
         ${currentParticipant.competencia ? `<div style="text-align:center;margin-bottom:0.3rem;font-size:0.9rem;color:var(--text-light);">${currentParticipant.competencia}</div>` : ''}
