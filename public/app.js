@@ -1049,7 +1049,7 @@ const moduleCompletados = document.getElementById('module-completados');
 const moduleKids = document.getElementById('module-kids');
 
 function loadModuleSettings() {
-  const defaults = { scanner: true, registro: true, qrcodes: true, send: true, kit: true, completados: true, kids: true };
+  const defaults = { scanner: true, registro: true, qrcodes: true, send: true, kit: false, completados: true, kids: true };
   const saved = JSON.parse(localStorage.getItem('xterra-modules') || '{}');
   const settings = { ...defaults, ...saved };
   if (moduleScanner) moduleScanner.checked = settings.scanner !== false;
