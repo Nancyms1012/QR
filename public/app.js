@@ -1102,7 +1102,7 @@ if (moduleKids) moduleKids.addEventListener('change', saveModuleSettings);
 loadModuleSettings();
 
 // Load default view (Registro) on page load
-loadRegistroList();
+// No list to load - just search
 
 // File upload
 const btnUpload = document.getElementById('btn-upload');
@@ -1468,33 +1468,7 @@ const regList = document.getElementById('reg-list');
 if (regSearchInput) regSearchInput.addEventListener('keyup', searchForRegistro);
 
 async function loadRegistroList() {
-  // Load recently completed registrations
-  try {
-    const res = await fetch('/api/completados');
-    const participants = await res.json();
-    if (!Array.isArray(participants)) return;
-
-    if (participants.length === 0) {
-      regList.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay registrados aún</p>';
-      return;
-    }
-
-    regList.innerHTML = participants.slice(0, 50).map(p => {
-      const regTime = p.checkInTime ? new Date(p.checkInTime).toLocaleTimeString('es-CR') : '';
-      return `
-        <div class="send-card" style="border-left: 5px solid #CCFF33;" onclick="showCheckinModal(${p.uid})">
-          <div class="send-info" style="cursor:pointer;">
-            <span class="dorsal">#${p.dorsal}</span>
-            <div class="nombre">${getDisplayName(p)}</div>
-            <div class="contacto"><span>✅ ${regTime}</span> <span>🏅 ${p.competencia || ''}</span></div>
-          </div>
-          <div class="participant-status">✅</div>
-        </div>
-      `;
-    }).join('');
-  } catch (err) {
-    regList.innerHTML = '';
-  }
+  // No list needed - only search
 }
 
 async function searchForRegistro() {
