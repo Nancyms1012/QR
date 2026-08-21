@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XTERRA CR - Control de Chips</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <img src="/logo-xterra.png" alt="XTERRA CR" style="max-width:180px;height:auto;margin-bottom:0.3rem;border-radius:4px;mix-blend-mode:multiply;">
+    <p style="color:rgba(255,255,255,0.8);font-size:0.85rem;margin-top:0.3rem;">Control de Chips</p>
+  </header>
+
+  <main>
+    <!-- COUNTERS -->
+    <div class="admin-card" id="chip-stats" style="margin-bottom:1rem;">
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-size:0.8rem;color:#64748b;">Total chips</div>
+          <div id="chip-total" style="font-size:2rem;font-weight:800;color:var(--primary);">0</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:0.8rem;color:#64748b;">Recibidos</div>
+          <div id="chip-received" style="font-size:2rem;font-weight:800;color:#16a34a;">0</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:0.8rem;color:#64748b;">Pendientes</div>
+          <div id="chip-pending" style="font-size:2rem;font-weight:800;color:#dc2626;">0</div>
+        </div>
+      </div>
+      <div class="progress-bar" style="margin-top:0.75rem;">
+        <div id="chip-progress" class="progress-fill" style="width:0%;"></div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <h2>🔍 Buscar y marcar chip devuelto</h2>
+    <div class="search-box">
+      <input type="text" id="chip-search" placeholder="Buscar por dorsal o nombre..." autocomplete="off">
+      <button id="btn-chip-search" class="btn btn-primary">Buscar</button>
+    </div>
+    <div id="chip-search-results"></div>
+
+    <!-- ADMIN -->
+    <div class="admin-card" style="margin-top:2rem;">
+      <h3>📂 Cargar listado de chips (CSV)</h3>
+      <p class="hint">Subí un CSV con los dorsales que llevan chip. Columnas: NUMERO (o DORSAL), NOMBRE (opcional)</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin:0.75rem 0;">
+        <input type="file" id="chip-file" accept=".csv,.json" style="font-size:0.9rem;">
+      </div>
+      <button id="btn-chip-upload" class="btn btn-primary">📤 Subir</button>
+      <button id="btn-chip-clear" class="btn btn-danger" style="margin-left:0.5rem;">🗑️ Borrar todo</button>
+      <div id="chip-upload-msg" style="margin-top:0.5rem;"></div>
+    </div>
+
+    <!-- RECENT -->
+    <h3 style="margin-top:1.5rem;font-size:1rem;color:var(--text-light);">✅ Últimos chips recibidos:</h3>
+    <div id="chip-recent" class="send-list"></div>
+  </main>
+
+  <script>
+    // ===== CHIP MANAGEMENT =====
+    const chipSearch = document.getElementById('chip-search');
+    const btnChipSearch = document.getElementById('btn-chip-search');
+    const chipSearchResults = document.getElementById('chip-search-results');
+    const btnChipUpload = document.getElementById('btn-chip-upload');
+    const btnChipClear = document.getElementById('btn-chip-clear');
+
+    btnChipSearch.addEventListener('click', searchChip);
+    chipSearch.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') searchChip();
+      if (chipSearch.value.length >= 2) searchChip();
+    });
+    btnChipUpload.addEventListener('click', uploadChips);
+    btnChipClear.addEventListener('click', clearChips);
+
+    // Load on start
+    loadChipStats();
+    loadRecentChips();
+
+    async function loadChipStats() {
+      try {
+        const res = await fetch('/api/chips');
+        const chips = await res.json();
+        if (!Array.isArray(chips)) return;
+
+        const total = chips.length;
+        const received = chips.filter(c => c.devuelto).length;
+        const pending = total - received;
+        const pct = total > 0 ? Math.round((received / total) * 100) : 0;
+
+        document.getElementById('chip-total').textContent = total;
+        document.getElementById('chip-received').textContent = received;
+        document.getElementById('chip-pending').textContent = pending;
+        document.getElementById('chip-progress').style.width = pct + '%';
+      } catch (err) {}
+    }
+
+    async function searchChip() {
+      const query = chipSearch.value.trim().toLowerCase();
+      if (!query) { chipSearchResults.innerHTML = ''; return; }
+
+      try {
+        const res = await fetch('/api/chips');
+        const chips = await res.json();
+        if (!Array.isArray(chips)) return;
+
+        let filtered = chips.filter(c => {
+          if (/^\d+$/.test(query)) return c.dorsal.toString() === query;
+          return (c.nombre || '').toLowerCase().includes(query);
+        });
+
+        if (filtered.length === 0) {
+          chipSearchResults.innerHTML = '<p style="color:#64748b;padding:1rem;text-align:center;">No encontrado</p>';
+          return;
+        }
+
+        chipSearchResults.innerHTML = filtered.map((c, i) => `
+          <div class="send-card" style="border-left:4px solid ${c.devuelto ? '#16a34a' : '#f59e0b'};">
+            <div class="send-info">
+              <span class="dorsal" style="font-size:1.6rem;">#${c.dorsal}</span>
+              <div class="nombre">${c.nombre || ''}</div>
+              ${c.devuelto ? `<div class="contacto"><span style="color:#16a34a;font-weight:600;">✅ Devuelto ${c.devueltoTime ? new Date(c.devueltoTime).toLocaleTimeString('es-CR') : ''}</span></div>` : ''}
+            </div>
+            ${!c.devuelto ? `<button class="btn btn-success" onclick="marcarChip('${c.dorsal}')" style="white-space:nowrap;">✅ Recibido</button>` : `<span style="font-size:1.5rem;">✅</span>`}
+          </div>
+        `).join('');
+      } catch (err) {
+        chipSearchResults.innerHTML = '<p style="color:red;">Error</p>';
+      }
+    }
+
+    async function marcarChip(dorsal) {
+      try {
+        const res = await fetch('/api/chips/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dorsal })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          chipSearch.value = '';
+          chipSearchResults.innerHTML = '';
+          loadChipStats();
+          loadRecentChips();
+        } else {
+          alert(data.error || 'Error');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function loadRecentChips() {
+      try {
+        const res = await fetch('/api/chips');
+        const chips = await res.json();
+        if (!Array.isArray(chips)) return;
+
+        const recent = chips.filter(c => c.devuelto).sort((a, b) => 
+          new Date(b.devueltoTime) - new Date(a.devueltoTime)
+        ).slice(0, 20);
+
+        const recentEl = document.getElementById('chip-recent');
+        if (recent.length === 0) {
+          recentEl.innerHTML = '<p style="color:#64748b;text-align:center;padding:1rem;">No hay chips devueltos aún</p>';
+          return;
+        }
+
+        recentEl.innerHTML = recent.map(c => `
+          <div class="send-card" style="border-left:4px solid #16a34a;">
+            <div class="send-info">
+              <span class="dorsal">#${c.dorsal}</span>
+              <div class="nombre">${c.nombre || ''}</div>
+              <div class="contacto"><span>✅ ${c.devueltoTime ? new Date(c.devueltoTime).toLocaleTimeString('es-CR') : ''}</span></div>
+            </div>
+            <span style="font-size:1.2rem;">✅</span>
+          </div>
+        `).join('');
+      } catch (err) {}
+    }
+
+    async function uploadChips() {
+      const file = document.getElementById('chip-file').files[0];
+      const msgEl = document.getElementById('chip-upload-msg');
+      if (!file) { msgEl.innerHTML = '<p style="color:#dc2626;">Seleccioná un archivo</p>'; return; }
+
+      try {
+        let text = await file.text();
+        text = text.replace(/^\uFEFF/, '').replace(/^[^\x20-\x7E]+/, '');
+
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) { msgEl.innerHTML = '<p style="color:#dc2626;">Archivo vacío</p>'; return; }
+
+        const header = lines[0].split(/[,;\t]/).map(h => h.trim().toUpperCase().replace(/['"]/g, '').replace(/[^\x20-\x7E]/g, ''));
+        
+        let dorsalCol = header.findIndex(h => h === 'NUMERO' || h === 'DORSAL' || h === 'NUM' || h === 'BIB');
+        let nombreCol = header.findIndex(h => h === 'NOMBRE' || h === 'NAME');
+
+        if (dorsalCol === -1) dorsalCol = 0;
+
+        const chips = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/[,;\t]/).map(c => c.trim().replace(/^['"]|['"]$/g, ''));
+          const dorsal = cols[dorsalCol];
+          const nombre = nombreCol >= 0 ? cols[nombreCol] : '';
+          if (dorsal) chips.push({ dorsal, nombre, devuelto: false, devueltoTime: null });
+        }
+
+        if (chips.length === 0) { msgEl.innerHTML = '<p style="color:#dc2626;">No se encontraron datos</p>'; return; }
+
+        const res = await fetch('/api/chips/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chips })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          msgEl.innerHTML = `<p style="color:#16a34a;">✅ ${data.total} chips cargados</p>`;
+          loadChipStats();
+        } else {
+          msgEl.innerHTML = '<p style="color:#dc2626;">Error al subir</p>';
+        }
+      } catch (err) {
+        msgEl.innerHTML = '<p style="color:#dc2626;">Error al procesar archivo</p>';
+      }
+    }
+
+    async function clearChips() {
+      if (!confirm('⚠️ ¿Borrar todos los datos de chips?')) return;
+      try {
+        const res = await fetch('/api/chips/clear', { method: 'POST' });
+        if (res.ok) {
+          alert('✅ Datos de chips eliminados');
+          loadChipStats();
+          loadRecentChips();
+          chipSearchResults.innerHTML = '';
+        }
+      } catch (err) { alert('Error'); }
+    }
+  </script>
+</body>
+</html>
