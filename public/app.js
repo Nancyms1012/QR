@@ -1446,10 +1446,12 @@ async function loadCompletadosList() {
             <div class="contacto">
               <span>🏅 ${p.competencia || ''}</span>
               ${p.talla ? `<span>👕 ${p.talla}</span>` : ''}
-              <span>📦 ${kitTime}</span>
+              <span>✅ ${kitTime}</span>
             </div>
           </div>
-          <div class="participant-status">✅📦</div>
+          <button class="btn btn-danger" onclick="revertirCheckin(${p.uid})" style="padding:0.3rem 0.6rem;font-size:0.8rem;white-space:nowrap;">
+            ↩️ Revertir
+          </button>
         </div>
       `;
     }).join('');
@@ -1782,5 +1784,23 @@ async function exportKids() {
     link.click();
   } catch (err) {
     alert('Error al exportar');
+  }
+}
+
+
+
+// Revert check-in from completados
+async function revertirCheckin(uid) {
+  if (!confirm('¿Revertir el check-in de esta persona?')) return;
+  try {
+    const res = await fetch(`/api/undo-checkin/${uid}`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      loadCompletadosList();
+    } else {
+      alert(data.error || 'Error al revertir');
+    }
+  } catch (err) {
+    alert('Error de conexión');
   }
 }

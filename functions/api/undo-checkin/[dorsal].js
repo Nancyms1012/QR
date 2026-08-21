@@ -17,6 +17,14 @@ export async function onRequestPost(context) {
     // Delete check-in data
     await env.CHECKIN_KV.delete(`checkin:uid_${uid}`);
 
+    // Remove from completados list
+    const compRaw = await env.CHECKIN_KV.get("completados-list");
+    if (compRaw) {
+      const completados = JSON.parse(compRaw);
+      const updated = completados.filter(p => p.uid !== uid);
+      await env.CHECKIN_KV.put("completados-list", JSON.stringify(updated));
+    }
+
     return Response.json({
       success: true,
       message: `Check-ins revertidos para ${participant.nombre} ${participant.apellidos || ''}`,
