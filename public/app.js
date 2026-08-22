@@ -1817,3 +1817,34 @@ async function revertirCheckin(uid) {
     alert('Error de conexión');
   }
 }
+
+
+
+// Export completados
+const btnExportCompletados = document.getElementById('btn-export-completados');
+if (btnExportCompletados) {
+  btnExportCompletados.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/completados');
+      const participants = await res.json();
+      if (!Array.isArray(participants) || participants.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+      }
+
+      const header = 'DORSAL;NOMBRE;APELLIDOS;COMPETENCIA;CATEGORIA;TALLA;HORA_REGISTRO';
+      const rows = participants.map(p => 
+        `${p.dorsal};${p.nombre || ''};${p.apellidos || ''};${p.competencia || ''};${p.categoria || ''};${p.talla || ''};${p.checkInTime ? new Date(p.checkInTime).toLocaleString('es-CR') : ''}`
+      );
+      const csv = [header, ...rows].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'completados.csv';
+      link.click();
+    } catch (err) {
+      alert('Error al exportar');
+    }
+  });
+}
