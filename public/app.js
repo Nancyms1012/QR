@@ -1396,6 +1396,8 @@ const completadosList = document.getElementById('completados-list');
 const completadosCount = document.getElementById('completados-count');
 
 if (completadosFilterCompetition) completadosFilterCompetition.addEventListener('change', loadCompletadosList);
+const completadosSearch = document.getElementById('completados-search');
+if (completadosSearch) completadosSearch.addEventListener('keyup', loadCompletadosList);
 
 async function loadCompletadosList() {
   try {
@@ -1422,6 +1424,15 @@ async function loadCompletadosList() {
     // Apply competition filter
     if (completadosFilterCompetition && completadosFilterCompetition.value) {
       filtered = filtered.filter(p => p.competencia === completadosFilterCompetition.value);
+    }
+
+    // Apply search
+    if (completadosSearch && completadosSearch.value.trim()) {
+      const query = completadosSearch.value.trim().toLowerCase();
+      filtered = filtered.filter(p => {
+        if (/^\d+$/.test(query)) return p.dorsal.toString() === query;
+        return (p.nombre || '').toLowerCase().includes(query) || (p.apellidos || '').toLowerCase().includes(query);
+      });
     }
 
     filtered.sort((a, b) => a.dorsal - b.dorsal);

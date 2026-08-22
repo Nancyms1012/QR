@@ -144,11 +144,14 @@
     <!-- COMPLETADOS VIEW -->
     <section id="view-completados" class="view">
       <h2>✅ Completados</h2>
-      <p class="hint">Participantes que completaron registro + retiro de kit.</p>
+      <p class="hint">Participantes que completaron registro.</p>
       <div class="filters">
         <select id="completados-filter-competition">
           <option value="">Todas las competencias</option>
         </select>
+      </div>
+      <div class="search-box">
+        <input type="text" id="completados-search" placeholder="🔍 Buscar por dorsal o nombre..." autocomplete="off">
       </div>
       <div id="completados-count" style="margin-bottom:0.75rem;font-size:0.95rem;font-weight:600;color:var(--success);"></div>
       <div id="completados-list" class="send-list"></div>
